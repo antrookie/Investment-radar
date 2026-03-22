@@ -945,8 +945,8 @@
             <th style="text-align:right">비중</th>
           </tr></thead>
           <tbody>
-            <tr><td class="td-name">KOSPI 공매도</td><td class="td-val">68,420</td><td class="td-chg up">▲ +2,140</td><td class="td-val">0.84%</td></tr>
-            <tr><td class="td-name">KOSDAQ 공매도</td><td class="td-val">12,880</td><td class="td-chg up">▲ +560</td><td class="td-val">0.62%</td></tr>
+            <tr><td class="td-name">KOSPI 공매도</td><td class="td-val" id="krx-short-kospi">68,420</td><td class="td-chg up">▲ +2,140</td><td class="td-val">0.84%</td></tr>
+            <tr><td class="td-name">KOSDAQ 공매도</td><td class="td-val" id="krx-short-kosdaq">12,880</td><td class="td-chg up">▲ +560</td><td class="td-val">0.62%</td></tr>
             <tr><td class="td-name">외국인 비중</td><td class="td-val" style="color:var(--down)">72.4%</td><td class="td-chg down">▼ -1.2%p</td><td class="td-val">—</td></tr>
             <tr><td class="td-name">기관 비중</td><td class="td-val">22.1%</td><td class="td-chg up">▲ +0.8%p</td><td class="td-val">—</td></tr>
           </tbody>
@@ -972,9 +972,9 @@
             <th style="text-align:right">전주비</th>
           </tr></thead>
           <tbody>
-            <tr><td class="td-name">신용융자 잔고 (KOSPI)</td><td class="td-val" style="color:var(--down)">98,240</td><td class="td-chg up">▲ +2,880</td></tr>
-            <tr><td class="td-name">신용융자 잔고 (KOSDAQ)</td><td class="td-val" style="color:var(--down)">64,150</td><td class="td-chg up">▲ +1,640</td></tr>
-            <tr><td class="td-name">신용융자 합계</td><td class="td-val" style="color:var(--down)">162,390</td><td class="td-chg up">▲ +4,520</td></tr>
+            <tr><td class="td-name">신용융자 잔고 (KOSPI)</td><td class="td-val" id="krx-credit-kospi" style="color:var(--down)">98,240</td><td class="td-chg up">▲ +2,880</td></tr>
+            <tr><td class="td-name">신용융자 잔고 (KOSDAQ)</td><td class="td-val" id="krx-credit-kosdaq" style="color:var(--down)">64,150</td><td class="td-chg up">▲ +1,640</td></tr>
+            <tr><td class="td-name">신용융자 합계</td><td class="td-val" id="krx-credit-total" style="color:var(--down)">162,390</td><td class="td-chg up">▲ +4,520</td></tr>
             <tr><td class="td-name">반대매매 규모 (일)</td><td class="td-val" style="color:var(--warn)">420</td><td class="td-chg down">▼ -80</td></tr>
           </tbody>
         </table>
@@ -1220,6 +1220,55 @@ async function fetchFredData() {
 
 fetchFredData();
 setInterval(fetchFredData, 60 * 60 * 1000);
+
+// =============================================
+// KRX 공매도·신용거래 데이터 연동
+// =============================================
+async function fetchKrxData() {
+  try {
+    const res = await fetch('/api/krx');
+    if (!res.ok) throw new Error('KRX API 오류: ' + res.status);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error);
+
+    const d = json.data;
+
+    // 공매도 잔고 업데이트
+    if (d.short_selling?.kospi != null) {
+      const kospiEl = document.getElementById('krx-short-kospi');
+      if (kospiEl) kospiEl.textContent = d.short_selling.kospi.toLocaleString('ko-KR');
+    }
+    if (d.short_selling?.kosdaq != null) {
+      const kosdaqEl = document.getElementById('krx-short-kosdaq');
+      if (kosdaqEl) kosdaqEl.textContent = d.short_selling.kosdaq.toLocaleString('ko-KR');
+    }
+    if (d.short_selling?.date) {
+      const dateEls = document.querySelectorAll('.krx-short-date');
+      dateEls.forEach(el => el.textContent = '기준일: ' + d.short_selling.date);
+    }
+
+    // 신용융자 잔고 업데이트
+    if (d.credit?.kospi != null) {
+      const el = document.getElementById('krx-credit-kospi');
+      if (el) el.textContent = d.credit.kospi.toLocaleString('ko-KR');
+    }
+    if (d.credit?.kosdaq != null) {
+      const el = document.getElementById('krx-credit-kosdaq');
+      if (el) el.textContent = d.credit.kosdaq.toLocaleString('ko-KR');
+    }
+    if (d.credit?.kospi != null && d.credit?.kosdaq != null) {
+      const total = d.credit.kospi + d.credit.kosdaq;
+      const el = document.getElementById('krx-credit-total');
+      if (el) el.textContent = total.toLocaleString('ko-KR');
+    }
+
+  } catch (e) {
+    console.warn('KRX 데이터 로드 실패, 샘플 유지:', e.message);
+  }
+}
+
+fetchKrxData();
+setInterval(fetchKrxData, 60 * 60 * 1000);
 
 
 // =============================================
