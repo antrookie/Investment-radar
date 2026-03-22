@@ -823,9 +823,9 @@
       <div class="card neutral">
         <div class="card-tag">US TREASURY · TGA</div>
         <div class="card-name">재무부 일반계정 잔고<br><span style="font-size:0.65rem;color:var(--text-dim)">Treasury General Account</span></div>
-        <div class="card-value">$7,456억</div>
-        <div class="card-change up"><span class="arrow">▲</span> +$840억 (주간)</div>
-        <div class="card-sub">잔고 증가 → 시중 유동성 ↓</div>
+        <div class="card-value" id="fred-tga">$7,456억</div>
+        <div class="card-change up" id="fred-tga-chg"><span class="arrow">▲</span> +$840억 (주간)</div>
+        <div class="card-sub" id="fred-tga-date">잔고 증가 → 시중 유동성 ↓</div>
         <div style="margin-top:0.8rem">
           <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--text-dim);margin-bottom:0.3rem;font-family:'JetBrains Mono',monospace">
             <span>$0</span><span>현재 $7,456억</span><span>$1.5조</span>
@@ -840,9 +840,9 @@
       <div class="card up">
         <div class="card-tag">FED · RRP</div>
         <div class="card-name">역레포 잔고<br><span style="font-size:0.65rem;color:var(--text-dim)">Reverse Repo Program</span></div>
-        <div class="card-value">$1,234억</div>
-        <div class="card-change down"><span class="arrow">▼</span> -$320억 (주간)</div>
-        <div class="card-sub">잔고 감소 → 시중 유동성 ↑</div>
+        <div class="card-value" id="fred-rrp">$1,234억</div>
+        <div class="card-change down" id="fred-rrp-chg"><span class="arrow">▼</span> -$320억 (주간)</div>
+        <div class="card-sub" id="fred-rrp-date">잔고 감소 → 시중 유동성 ↑</div>
         <div style="margin-top:0.8rem">
           <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--text-dim);margin-bottom:0.3rem;font-family:'JetBrains Mono',monospace">
             <span>$0</span><span>현재 $1,234억</span><span>$2.5조</span>
@@ -859,8 +859,8 @@
         <div class="card-tag">FED · BALANCE SHEET</div>
         <div class="card-name" style="margin-bottom:0.4rem">연방준비제도 대차대조표 · Federal Reserve Balance Sheet</div>
         <div style="display:flex;align-items:baseline;gap:1rem;margin-bottom:0.8rem">
-          <div class="card-value">$6.762조</div>
-          <div class="card-change down"><span class="arrow">▼</span> -$420억 (주간) · QT 진행 중</div>
+          <div class="card-value" id="fred-balance">$6.762조</div>
+          <div class="card-change down" id="fred-balance-chg"><span class="arrow">▼</span> -$420억 (주간) · QT 진행 중</div>
         </div>
         <div class="balance-bar-wrap">
           <div class="balance-row">
@@ -894,8 +894,8 @@
             <div class="card-name" style="margin:0.4rem 0 0">미국 지급준비금 · Bank Reserve Balances at Fed</div>
           </div>
           <div style="text-align:right">
-            <div class="card-value">$3.248조</div>
-            <div class="card-change up"><span class="arrow">▲</span> +$180억 (주간)</div>
+            <div class="card-value" id="fred-reserves">$3.248조</div>
+            <div class="card-change up" id="fred-reserves-chg"><span class="arrow">▲</span> +$180억 (주간)</div>
           </div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem">
@@ -1023,9 +1023,9 @@
   </div>
 
   <div class="disclaimer">
-    📡 증시·환율·금리·원자재·가상자산 데이터: Yahoo Finance (5분 지연) · 자동 갱신 5분 주기<br>
-    TGA·RRP·Fed 대차대조표·지급준비금·공매도·신용거래: 샘플 데이터 (추후 FRED·KRX API 연동 예정)<br>
-    본 사이트는 정보 제공 목적이며 투자 권유가 아닙니다. 투자 결정은 본인 책임입니다.
+    📡 증시·환율·금리·원자재·가상자산: Yahoo Finance (5분 지연) · 자동 갱신 5분 주기<br>
+    📊 Fed 대차대조표·지급준비금·RRP·TGA: FRED API (St. Louis Fed) · 주간 업데이트 · 자동 갱신 1시간 주기<br>
+    공매도·신용거래: 샘플 데이터 (추후 KRX OpenAPI 연동 예정) · 본 사이트는 정보 제공 목적이며 투자 권유가 아닙니다.
   </div>
 
 </div>
@@ -1152,6 +1152,163 @@ async function fetchMarketData() {
 // 페이지 로드 시 즉시 + 5분마다 갱신
 fetchMarketData();
 setInterval(fetchMarketData, 5 * 60 * 1000);
+
+// =============================================
+// FRED 유동성 데이터 연동
+// =============================================
+function fmtTrillion(v) {
+  if (v == null) return '—';
+  // 억달러 → 조달러 변환 표시
+  if (v >= 10000) return '$' + (v / 10000).toFixed(2) + '조';
+  return '$' + v.toLocaleString('ko-KR') + '억';
+}
+
+function updateFredCard(elId, d, invertDirection) {
+  const el = document.getElementById(elId);
+  if (!el || !d) return;
+  el.textContent = fmtTrillion(d.value);
+
+  const chgEl = el.nextElementSibling;
+  if (!chgEl || !d.change) return;
+  const isUp = d.change > 0;
+  // invertDirection: TGA·대차대조표는 증가가 유동성에 부정적
+  const isPositive = invertDirection ? !isUp : isUp;
+  const arrow = isUp ? '▲' : '▼';
+  const sign  = isUp ? '+' : '';
+  chgEl.textContent = `${arrow} ${sign}${fmtTrillion(d.change)} (주간)`;
+  chgEl.className   = 'card-change ' + (isPositive ? 'up' : 'down');
+
+  // 날짜 표시
+  const subEl = chgEl.nextElementSibling;
+  if (subEl && subEl.classList.contains('card-sub') && d.date) {
+    const existing = subEl.textContent.split('·')[0].trim();
+    subEl.textContent = existing + ' · 기준일: ' + d.date;
+  }
+}
+
+// 대차대조표 바 업데이트
+function updateBalanceBar(d) {
+  if (!d?.fed_balance_sheet?.raw) return;
+  const total = d.fed_balance_sheet.value; // 억달러
+  const bar = document.querySelector('.balance-bar-fill');
+  if (!bar) return;
+  // 고점 $8.97조 = 89700억 기준으로 비율 계산
+  const pct = Math.min(100, Math.round((total / 89700) * 100));
+  bar.style.width = pct + '%';
+}
+
+async function fetchFredData() {
+  try {
+    const res = await fetch('/api/fred');
+    if (!res.ok) throw new Error('FRED API 오류');
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error);
+
+    const d = json.data;
+
+    // TGA — 잔고 증가 = 유동성 감소 (invertDirection: true)
+    updateFredCard('fred-tga', d.tga, true);
+
+    // RRP — 잔고 감소 = 유동성 증가 (invertDirection: false → 감소가 긍정적)
+    updateFredCard('fred-rrp', d.rrp, false);
+
+    // Fed 대차대조표 — 감소 = QT 진행 (invertDirection: true)
+    updateFredCard('fred-balance', d.fed_balance_sheet, true);
+
+    // 지급준비금
+    updateFredCard('fred-reserves', d.reserves, false);
+
+    // 대차대조표 바 차트 업데이트
+    updateBalanceBar(d);
+
+  } catch (e) {
+    console.warn('FRED 데이터 로드 실패, 샘플 유지:', e.message);
+  }
+}
+
+// 페이지 로드 시 + 1시간마다 갱신 (주간 데이터)
+fetchFredData();
+setInterval(fetchFredData, 60 * 60 * 1000);
+
+// =============================================
+// FRED 데이터 연동 (Fed 유동성 지표)
+// =============================================
+function fmtBillion(v) {
+  if (v == null) return '—';
+  if (v >= 1000) return '$' + (v / 1000).toFixed(2) + '조';
+  return '$' + v.toFixed(0) + '억';
+}
+
+function fmtChange(val, prev) {
+  if (val == null || prev == null) return '';
+  const diff = val - prev;
+  const sign = diff >= 0 ? '+' : '';
+  const arrow = diff >= 0 ? '▲' : '▼';
+  return `${arrow} ${sign}${fmtBillion(Math.abs(diff))} (주간)`;
+}
+
+async function fetchFredData() {
+  try {
+    const res = await fetch('/api/fred');
+    if (!res.ok) throw new Error('FRED API 오류');
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error);
+
+    const d = json.data;
+
+    // TGA 업데이트
+    const tgaEl = document.getElementById('fred-tga');
+    const tgaChg = document.getElementById('fred-tga-chg');
+    const tgaDate = document.getElementById('fred-tga-date');
+    if (tgaEl && d.fed_tga.value != null) {
+      tgaEl.textContent = fmtBillion(d.fed_tga.value * 10); // 십억→억달러 환산 표시
+      if (tgaChg) tgaChg.textContent = fmtChange(d.fed_tga.value, d.fed_tga.prev);
+      if (tgaDate) tgaDate.textContent = '기준일: ' + d.fed_tga.date;
+    }
+
+    // RRP 업데이트
+    const rrpEl = document.getElementById('fred-rrp');
+    const rrpChg = document.getElementById('fred-rrp-chg');
+    const rrpDate = document.getElementById('fred-rrp-date');
+    if (rrpEl && d.fed_rrp.value != null) {
+      rrpEl.textContent = fmtBillion(d.fed_rrp.value * 10);
+      if (rrpChg) {
+        const diff = d.fed_rrp.value - (d.fed_rrp.prev ?? d.fed_rrp.value);
+        const isDown = diff <= 0;
+        rrpChg.textContent = fmtChange(d.fed_rrp.value, d.fed_rrp.prev);
+        rrpChg.className = 'card-change ' + (isDown ? 'up' : 'down'); // RRP 감소 = 유동성 증가 = 긍정
+      }
+      if (rrpDate) rrpDate.textContent = '기준일: ' + d.fed_rrp.date;
+    }
+
+    // Fed 대차대조표 업데이트
+    const balEl = document.getElementById('fred-balance');
+    const balChg = document.getElementById('fred-balance-chg');
+    const balDate = document.getElementById('fred-balance-date');
+    if (balEl && d.fed_balance.value != null) {
+      balEl.textContent = '$' + (d.fed_balance.value / 1000).toFixed(3) + '조';
+      if (balChg) balChg.textContent = fmtChange(d.fed_balance.value, d.fed_balance.prev);
+      if (balDate) balDate.textContent = '기준일: ' + d.fed_balance.date;
+    }
+
+    // 지급준비금 업데이트
+    const resEl = document.getElementById('fred-reserves');
+    const resChg = document.getElementById('fred-reserves-chg');
+    const resDate = document.getElementById('fred-reserves-date');
+    if (resEl && d.fed_reserves.value != null) {
+      resEl.textContent = '$' + (d.fed_reserves.value / 1000).toFixed(3) + '조';
+      if (resChg) resChg.textContent = fmtChange(d.fed_reserves.value, d.fed_reserves.prev);
+      if (resDate) resDate.textContent = '기준일: ' + d.fed_reserves.date;
+    }
+
+  } catch (e) {
+    console.warn('FRED 데이터 로드 실패, 샘플 유지:', e.message);
+  }
+}
+
+// 페이지 로드 시 즉시 + 1시간마다 갱신 (주간 데이터라 충분)
+fetchFredData();
+setInterval(fetchFredData, 60 * 60 * 1000);
 
 // =============================================
 // Clock
