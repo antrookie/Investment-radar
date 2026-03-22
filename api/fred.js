@@ -1,72 +1,61 @@
-export const config = { runtime: 'edge' };
+// Node.js Runtime 사용 (Edge보다 안정적)
+export const config = { maxDuration: 30 };
 
-const SERIES = {
+const SERIES_MAP = {
   WALCL:     'fed_balance_sheet',
   WRESBAL:   'reserves',
   RRPONTSYD: 'rrp',
   WTREGEN:   'tga',
 };
 
-async function fetchOne(id, apiKey) {
-  const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${id}&api_key=${apiKey}&file_type=json&sort_order=desc&limit=2&realtime_start=2020-01-01`;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 6000); // 6초 타임아웃
-  try {
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timer);
-    if (!res.ok) return null;
-    const json = await res.json();
-    const obs = (json.observations ?? []).filter(o => o.value !== '.');
-    const latest = obs[0];
-    const prev   = obs[1];
-    return {
-      value:  latest ? parseFloat(latest.value) : null,
-      date:   latest?.date ?? null,
-      prev:   prev   ? parseFloat(prev.value)   : null,
-    };
-  } catch {
-    clearTimeout(timer);
-    return null;
-  }
+const toHundredMillion = v => v != null ? Math.round(v / 100) : null;
+
+async function fetchSeries(id, apiKey) {
+  const url = `https://api.stlouisfed.org/fred/series/observations` +
+    `?series_id=${id}` +
+    `&api_key=${apiKey}` +
+    `&file_type=json` +
+    `&sort_order=desc` +
+    `&limit=2`;
+
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`FRED ${id}: ${res.status}`);
+  const json = await res.json();
+  const obs = (json.observations ?? []).filter(o => o.value !== '.');
+  return {
+    value: obs[0] ? parseFloat(obs[0].value) : null,
+    date:  obs[0]?.date ?? null,
+    prev:  obs[1] ? parseFloat(obs[1].value) : null,
+  };
 }
 
-export default async function handler() {
+export default async function handler(req, res) {
   const apiKey = process.env.FRED_API_KEY;
+
   if (!apiKey) {
-    return new Response(JSON.stringify({ ok: false, error: 'FRED_API_KEY 없음' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    });
+    return res.status(500).json({ ok: false, error: 'FRED_API_KEY 환경변수가 없습니다' });
   }
 
-  // 4개 동시 요청 (Promise.allSettled — 하나 실패해도 나머지 반환)
-  const entries = Object.entries(SERIES);
-  const results = await Promise.allSettled(
-    entries.map(([id]) => fetchOne(id, apiKey))
-  );
-
-  const toHundredMillion = v => v != null ? Math.round(v / 100) : null;
-
+  // 4개를 순차적으로 호출 (병렬 X → 서버 부하 감소)
   const data = {};
-  entries.forEach(([id, key], i) => {
-    const r = results[i].status === 'fulfilled' ? results[i].value : null;
-    if (!r) { data[key] = null; return; }
-    const val  = toHundredMillion(r.value);
-    const prev = toHundredMillion(r.prev);
-    data[key] = {
-      value:  val,
-      prev:   prev,
-      change: val != null && prev != null ? val - prev : null,
-      date:   r.date,
-      unit:   '억달러',
-    };
-  });
+  for (const [id, key] of Object.entries(SERIES_MAP)) {
+    try {
+      const r = await fetchSeries(id, apiKey);
+      const val  = toHundredMillion(r.value);
+      const prev = toHundredMillion(r.prev);
+      data[key] = {
+        value:  val,
+        prev:   prev,
+        change: val != null && prev != null ? val - prev : null,
+        date:   r.date,
+        unit:   '억달러',
+      };
+    } catch (e) {
+      data[key] = { value: null, error: e.message };
+    }
+  }
 
-  return new Response(JSON.stringify({ ok: true, data, ts: Date.now() }), {
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Cache-Control': 's-maxage=3600, stale-while-revalidate=300',
-    },
-  });
+  res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=300');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  return res.status(200).json({ ok: true, data, ts: Date.now() });
 }
