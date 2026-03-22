@@ -1,157 +1,88 @@
 export const config = { maxDuration: 30 };
 
-// KRX 내부 API 엔드포인트
-// 공매도 잔고: http://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd
-// 신용거래: 한국금융투자협회(KOFIA) 데이터 활용
-
-const KRX_BASE = 'http://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd';
-
-// 오늘 날짜 및 전주 날짜 계산
-function getDateStr(daysAgo = 0) {
+// 날짜 계산 (영업일 기준)
+function getDateStr(daysAgo = 1) {
   const d = new Date();
   d.setDate(d.getDate() - daysAgo);
-  // 주말이면 금요일로 조정
-  if (d.getDay() === 0) d.setDate(d.getDate() - 2);
-  if (d.getDay() === 6) d.setDate(d.getDate() - 1);
+  while (d.getDay() === 0 || d.getDay() === 6) {
+    d.setDate(d.getDate() - 1);
+  }
   return d.toISOString().slice(0, 10).replace(/-/g, '');
 }
 
-async function fetchKrxShortSelling() {
-  const trdDd = getDateStr(1); // 어제 기준
-
-  // KOSPI 공매도 잔고 상위
-  const body = new URLSearchParams({
-    bld: 'dbms/MDC/STAT/standard/MDCSTAT30301',
-    mktId: 'STK', // KOSPI
-    trdDd,
-    share: '1',
-    money: '1',
-    csvxls_isNo: 'false',
-  });
-
-  const res = await fetch(KRX_BASE, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      'Referer': 'http://data.krx.co.kr/contents/MDC/MDI/mdMain/mdMainIdx.cmd',
-      'Origin': 'http://data.krx.co.kr',
-    },
-    body: body.toString(),
-  });
-
-  if (!res.ok) throw new Error(`KRX KOSPI 공매도 ${res.status}`);
-  return await res.json();
-}
-
-async function fetchKrxShortSellingKosdaq() {
-  const trdDd = getDateStr(1);
-
-  const body = new URLSearchParams({
-    bld: 'dbms/MDC/STAT/standard/MDCSTAT30301',
-    mktId: 'KSQ', // KOSDAQ
-    trdDd,
-    share: '1',
-    money: '1',
-    csvxls_isNo: 'false',
-  });
-
-  const res = await fetch(KRX_BASE, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      'Referer': 'http://data.krx.co.kr/contents/MDC/MDI/mdMain/mdMainIdx.cmd',
-      'Origin': 'http://data.krx.co.kr',
-    },
-    body: body.toString(),
-  });
-
-  if (!res.ok) throw new Error(`KRX KOSDAQ 공매도 ${res.status}`);
-  return await res.json();
-}
-
-// 신용거래: 금융투자협회 KOFIA API
-async function fetchCreditBalance() {
-  const today = getDateStr(1);
-  const weekAgo = getDateStr(8);
-
-  const url = `https://freesis.kofia.or.kr/sisnew/app/FEWebContentView.do` +
-    `?menuCode=M_ETC_0060&type=json` +
-    `&searchStartDate=${weekAgo}&searchEndDate=${today}`;
+async function fetchEcos(apiKey, seriesCode, itemCode) {
+  const endDate = getDateStr(1);
+  const startDate = getDateStr(30); // 최근 30일 중 최신값
+  const url = `https://ecos.bok.or.kr/api/StatisticSearch/${apiKey}/json/kr/1/5/${seriesCode}/D/${startDate}/${endDate}/${itemCode}`;
 
   const res = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0',
-      'Accept': 'application/json',
-      'Referer': 'https://freesis.kofia.or.kr/',
-    },
+    headers: { 'User-Agent': 'Mozilla/5.0' },
   });
+  if (!res.ok) throw new Error(`ECOS ${seriesCode} ${res.status}`);
+  const json = await res.json();
 
-  if (!res.ok) throw new Error(`KOFIA 신용잔고 ${res.status}`);
-  return await res.json();
+  // 최신 데이터 추출
+  const rows = json?.StatisticSearch?.row ?? [];
+  if (rows.length === 0) return null;
+
+  // 날짜 내림차순 정렬 후 최신 2개
+  rows.sort((a, b) => b.TIME.localeCompare(a.TIME));
+  const latest = rows[0];
+  const prev   = rows[1] ?? null;
+
+  return {
+    value: latest?.DATA_VALUE ? parseFloat(latest.DATA_VALUE.replace(/,/g, '')) : null,
+    date:  latest?.TIME ?? null,
+    prev:  prev?.DATA_VALUE   ? parseFloat(prev.DATA_VALUE.replace(/,/g, ''))   : null,
+  };
 }
 
 export default async function handler(req, res) {
-  const results = await Promise.allSettled([
-    fetchKrxShortSelling(),
-    fetchKrxShortSellingKosdaq(),
-    fetchCreditBalance(),
-  ]);
-
-  const [kospiShort, kosdaqShort, credit] = results.map(r =>
-    r.status === 'fulfilled' ? r.value : { error: r.reason?.message }
-  );
-
-  // KOSPI 공매도 잔고 합산
-  let kospiShortBalance = null;
-  let kosdaqShortBalance = null;
+  const apiKey = process.env.ECOS_API_KEY ?? 'sample';
 
   try {
-    if (kospiShort?.output) {
-      const total = kospiShort.output.reduce((sum, row) => {
-        const val = parseFloat((row.REMAINDER_AMT ?? '0').replace(/,/g, ''));
-        return sum + (isNaN(val) ? 0 : val);
-      }, 0);
-      kospiShortBalance = Math.round(total / 100000000); // 원 → 억원
-    }
-  } catch {}
+    // ECOS 통계 코드
+    // 027Y151: 신용융자 잔고 (KOSPI/KOSDAQ)
+    // 027Y152: 공매도 잔고
+    const [creditKospi, creditKosdaq, shortKospi, shortKosdaq] = await Promise.allSettled([
+      fetchEcos(apiKey, '027Y151', 'S'),   // 신용융자 KOSPI
+      fetchEcos(apiKey, '027Y151', 'K'),   // 신용융자 KOSDAQ
+      fetchEcos(apiKey, '027Y152', 'S'),   // 공매도 KOSPI
+      fetchEcos(apiKey, '027Y152', 'K'),   // 공매도 KOSDAQ
+    ]);
 
-  try {
-    if (kosdaqShort?.output) {
-      const total = kosdaqShort.output.reduce((sum, row) => {
-        const val = parseFloat((row.REMAINDER_AMT ?? '0').replace(/,/g, ''));
-        return sum + (isNaN(val) ? 0 : val);
-      }, 0);
-      kosdaqShortBalance = Math.round(total / 100000000);
-    }
-  } catch {}
+    const get = r => r.status === 'fulfilled' ? r.value : null;
 
-  // 신용융자 잔고
-  let creditData = null;
-  try {
-    if (credit?.result) {
-      const latest = credit.result[0];
-      creditData = {
-        kospi:  latest?.kospiCrdtAmt  ? Math.round(parseFloat(latest.kospiCrdtAmt)  / 100) : null,
-        kosdaq: latest?.kosdaqCrdtAmt ? Math.round(parseFloat(latest.kosdaqCrdtAmt) / 100) : null,
-        date:   latest?.standardDt ?? null,
-      };
-    }
-  } catch {}
+    const toUk = v => v != null ? Math.round(v / 100000000) : null; // 원 → 억원
 
-  const data = {
-    short_selling: {
-      kospi:  kospiShortBalance,
-      kosdaq: kosdaqShortBalance,
-      date:   getDateStr(1).replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'),
-      raw_error: kospiShort?.error ?? null,
-    },
-    credit: creditData ?? { error: credit?.error ?? '데이터 없음' },
-    ts: Date.now(),
-  };
+    const ck = get(creditKospi);
+    const cq = get(creditKosdaq);
+    const sk = get(shortKospi);
+    const sq = get(shortKosdaq);
 
-  res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=300');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  return res.status(200).json({ ok: true, data });
+    const data = {
+      credit: {
+        kospi:  ck ? toUk(ck.value) : null,
+        kosdaq: cq ? toUk(cq.value) : null,
+        kospi_prev:  ck ? toUk(ck.prev) : null,
+        kosdaq_prev: cq ? toUk(cq.prev) : null,
+        date: ck?.date ?? null,
+      },
+      short_selling: {
+        kospi:  sk ? toUk(sk.value) : null,
+        kosdaq: sq ? toUk(sq.value) : null,
+        kospi_prev:  sk ? toUk(sk.prev) : null,
+        kosdaq_prev: sq ? toUk(sq.prev) : null,
+        date: sk?.date ?? null,
+      },
+    };
+
+    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=300');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    return res.status(200).json({ ok: true, data, ts: Date.now() });
+
+  } catch (e) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    return res.status(500).json({ ok: false, error: e.message });
+  }
 }
