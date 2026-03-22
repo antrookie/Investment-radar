@@ -1187,39 +1187,24 @@ function updateFredCard(valueId, chgId, dateId, value, prev, date, invertDirecti
   }
 }
 
-async function fetchOneFred(seriesId) {
-  const url = 'https://api.stlouisfed.org/fred/series/observations'
-    + '?series_id=' + seriesId
-    + '&api_key=' + FRED_KEY
-    + '&file_type=json&sort_order=desc&limit=2';
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(seriesId + ' ' + res.status);
-  const json = await res.json();
-  const obs = (json.observations || []).filter(o => o.value !== '.');
-  const toHM = v => v ? Math.round(parseFloat(v) / 100) : null; // 백만→억달러
-  return {
-    value: toHM(obs[0]?.value),
-    prev:  toHM(obs[1]?.value),
-    date:  obs[0]?.date ?? null,
-  };
-}
-
 async function fetchFredData() {
   try {
-    const [tga, rrp, bs, res] = await Promise.allSettled([
-      fetchOneFred('WTREGEN'),
-      fetchOneFred('RRPONTSYD'),
-      fetchOneFred('WALCL'),
-      fetchOneFred('WRESBAL'),
-    ]);
+    // 브라우저 → Vercel 서버(/api/fred) → FRED API 순서로 호출
+    const res = await fetch('/api/fred');
+    if (!res.ok) throw new Error('api/fred 응답 오류: ' + res.status);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error);
 
-    const get = r => r.status === 'fulfilled' ? r.value : { value: null, prev: null, date: null };
-    const T = get(tga), R = get(rrp), B = get(bs), Re = get(res);
+    const d = json.data;
+    const T  = d.tga              ?? {};
+    const R  = d.rrp              ?? {};
+    const B  = d.fed_balance_sheet ?? {};
+    const Re = d.reserves         ?? {};
 
-    updateFredCard('fred-tga',      'fred-tga-chg',      'fred-tga-date',      T.value,  T.prev,  T.date,  true);
-    updateFredCard('fred-rrp',      'fred-rrp-chg',      'fred-rrp-date',      R.value,  R.prev,  R.date,  false);
-    updateFredCard('fred-balance',  'fred-balance-chg',  null,                 B.value,  B.prev,  B.date,  true);
-    updateFredCard('fred-reserves', 'fred-reserves-chg', null,                 Re.value, Re.prev, Re.date, false);
+    updateFredCard('fred-tga',      'fred-tga-chg',      'fred-tga-date', T.value,  T.prev,  T.date,  true);
+    updateFredCard('fred-rrp',      'fred-rrp-chg',      'fred-rrp-date', R.value,  R.prev,  R.date,  false);
+    updateFredCard('fred-balance',  'fred-balance-chg',  null,            B.value,  B.prev,  B.date,  true);
+    updateFredCard('fred-reserves', 'fred-reserves-chg', null,            Re.value, Re.prev, Re.date, false);
 
     // 대차대조표 프로그레스 바 업데이트
     if (B.value != null) {
