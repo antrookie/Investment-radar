@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>유동성 레이더 — 금융시장 모니터</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c10;
+    --surface: #0d1219;
+    --surface2: #121920;
+    --border: #1e2d3d;
+    --border2: #243345;
+    --text: #c8d8e8;
+    --text-dim: #5a7a94;
+    --text-bright: #e8f4ff;
+    --up: #00e5a0;
+    --down: #ff4466;
+    --warn: #ffaa00;
+    --blue: #00aaff;
+    --purple: #aa66ff;
+    --cyan: #00ddcc;
+    --accent: #00e5a0;
+    --glow-up: 0 0 20px rgba(0,229,160,0.3);
+    --glow-down: 0 0 20px rgba(255,68,102,0.3);
+    --glow-blue: 0 0 20px rgba(0,170,255,0.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* Grid noise texture */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(ellipse at 20% 50%, rgba(0,170,255,0.04) 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 20%, rgba(0,229,160,0.03) 0%, transparent 50%),
+                      radial-gradient(ellipse at 60% 80%, rgba(170,102,255,0.03) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(8,12,16,0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+  }
+
+  .logo-main {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    text-shadow: 0 0 30px rgba(0,229,160,0.5);
+  }
+
+  .logo-sub {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--up);
+    letter-spacing: 0.1em;
+  }
+
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--up);
+    box-shadow: 0 0 8px var(--up);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  .clock {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  .main {
+    position: relative;
+    z-index: 1;
+    padding: 1.5rem 2rem 3rem;
+    max-width: 1800px;
+    margin: 0 auto;
+  }
+
+  /* Section label */
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    margin-top: 1.8rem;
+  }
+
+  .section-label::before {
+    content: '';
+    width: 3px;
+    height: 14px;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    border-radius: 2px;
+  }
+
+  .section-label span {
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+
+  /* Grid layouts */
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    padding: 1.4rem 1.6rem;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s;
+  }
+
+  .card:hover { background: var(--surface2); }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: transparent;
+    transition: background 0.3s;
+  }
+
+  .card.up::before { background: linear-gradient(90deg, transparent, var(--up), transparent); }
+  .card.down::before { background: linear-gradient(90deg, transparent, var(--down), transparent); }
+  .card.neutral::before { background: linear-gradient(90deg, transparent, var(--blue), transparent); }
+
+  .card-tag {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    font-weight: 500;
+    margin-bottom: 0.6rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .card-name {
+    font-size: 0.8rem;
+    color: var(--text);
+    margin-bottom: 0.9rem;
+    font-weight: 400;
+    line-height: 1.3;
+  }
+
+  .card-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-bright);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .card-value.big { font-size: 1.8rem; }
+
+  .card-change {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+  }
+
+  .card-change.up { color: var(--up); }
+  .card-change.down { color: var(--down); }
+  .card-change.neutral { color: var(--blue); }
+
+  .arrow { font-size: 0.7rem; }
+
+  .card-sub {
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    margin-top: 0.4rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Mini sparkline */
+  .sparkline-wrap {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 80px;
+    height: 40px;
+    opacity: 0.4;
+  }
+
+  /* Wide card */
+  .card-wide {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.4rem 1.6rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Fed Balance Sheet bar */
+  .balance-bar-wrap {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .balance-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .balance-label {
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    width: 120px;
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .balance-bar-bg {
+    flex: 1;
+    height: 6px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .balance-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s ease;
+  }
+
+  .balance-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text);
+    width: 80px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* Table style */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    margin-top: 0.8rem;
+  }
+
+  .data-table th {
+    text-align: left;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .data-table td {
+    padding: 0.65rem 0.8rem;
+    border-bottom: 1px solid rgba(30,45,61,0.5);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+  }
+
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .td-name { color: var(--text); }
+  .td-val { color: var(--text-bright); text-align: right; }
+  .td-chg { text-align: right; }
+  .td-chg.up { color: var(--up); }
+  .td-chg.down { color: var(--down); }
+  .td-bar { width: 100px; }
+
+  .inline-bar-bg {
+    height: 4px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .inline-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+  }
+
+  /* Liquidity gauge */
+  .gauge-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.4rem 1.6rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 0;
+  }
+
+  .gauge-wrap {
+    position: relative;
+    width: 120px;
+    height: 70px;
+    flex-shrink: 0;
+  }
+
+  .gauge-svg { overflow: visible; }
+
+  .gauge-text {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+  }
+
+  .gauge-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    color: var(--warn);
+    letter-spacing: 0.05em;
+    line-height: 1;
+  }
+
+  .gauge-label {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .gauge-info { flex: 1; }
+
+  .gauge-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    color: var(--text-bright);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.4rem;
+  }
+
+  .gauge-desc {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    max-width: 400px;
+  }
+
+  .gauge-indicators {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 0.8rem;
+  }
+
+  .gi-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .gi-label {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .gi-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  /* Status tags */
+  .tag {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 500;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .tag-up { background: rgba(0,229,160,0.1); color: var(--up); border: 1px solid rgba(0,229,160,0.2); }
+  .tag-down { background: rgba(255,68,102,0.1); color: var(--down); border: 1px solid rgba(255,68,102,0.2); }
+  .tag-warn { background: rgba(255,170,0,0.1); color: var(--warn); border: 1px solid rgba(255,170,0,0.2); }
+  .tag-blue { background: rgba(0,170,255,0.1); color: var(--blue); border: 1px solid rgba(0,170,255,0.2); }
+
+  /* Responsive */
+  @media (max-width: 1200px) {
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .grid-5 { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  @media (max-width: 768px) {
+    .main { padding: 1rem; }
+    .grid-4, .grid-3, .grid-5 { grid-template-columns: 1fr 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .gauge-section { flex-direction: column; }
+    header { padding: 0 1rem; }
+  }
+
+  /* Fade in animation */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-anim {
+    animation: fadeIn 0.5s ease forwards;
+    opacity: 0;
+  }
+
+  .section-anim:nth-child(1) { animation-delay: 0.1s; }
+  .section-anim:nth-child(2) { animation-delay: 0.2s; }
+  .section-anim:nth-child(3) { animation-delay: 0.3s; }
+  .section-anim:nth-child(4) { animation-delay: 0.4s; }
+  .section-anim:nth-child(5) { animation-delay: 0.5s; }
+
+  /* Ticker tape */
+  .ticker-wrap {
+    width: 100%;
+    overflow: hidden;
+    background: rgba(13,18,25,0.8);
+    border-bottom: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+    padding: 0.4rem 0;
+    margin-bottom: 0;
+  }
+
+  .ticker-inner {
+    display: flex;
+    gap: 3rem;
+    animation: ticker 30s linear infinite;
+    width: max-content;
+  }
+
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  .ticker-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+  }
+
+  .ticker-sym { color: var(--text-dim); font-weight: 600; letter-spacing: 0.05em; }
+  .ticker-val { color: var(--text-bright); }
+  .ticker-chg.up { color: var(--up); }
+  .ticker-chg.down { color: var(--down); }
+  .ticker-sep { color: var(--border2); margin: 0 0.5rem; }
+
+  .disclaimer {
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 2rem 0 1rem;
+    letter-spacing: 0.05em;
+    line-height: 1.8;
+  }
+
+  /* sparkline canvas placeholder */
+  .spark {
+    width: 100%;
+    height: 40px;
+    margin-top: 0.8rem;
+    opacity: 0.6;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .three-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.2rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-main">유동성 레이더</span>
+    <span class="logo-sub">Liquidity Monitor</span>
+  </div>
+  <div class="header-right">
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      LIVE
+    </div>
+    <div class="clock" id="clock">—</div>
+  </div>
+</header>
+
+<!-- Ticker tape -->
+<div class="ticker-wrap">
+  <div class="ticker-inner" id="ticker"></div>
+</div>
+
+<div class="main">
+
+  <!-- Liquidity Score Gauge -->
+  <div class="section-anim" style="animation-delay:0.05s">
+    <div class="section-label"><span>유동성 종합 지수</span></div>
+    <div class="gauge-section">
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" viewBox="0 0 120 70" width="120" height="70">
+          <!-- Background arc -->
+          <path d="M 10 65 A 55 55 0 0 1 110 65" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10" stroke-linecap="round"/>
+          <!-- Color zones -->
+          <path d="M 10 65 A 55 55 0 0 1 43 19" fill="none" stroke="rgba(255,68,102,0.5)" stroke-width="10" stroke-linecap="round"/>
+          <path d="M 43 19 A 55 55 0 0 1 77 19" fill="none" stroke="rgba(255,170,0,0.5)" stroke-width="10" stroke-linecap="round"/>
+          <path d="M 77 19 A 55 55 0 0 1 110 65" fill="none" stroke="rgba(0,229,160,0.5)" stroke-width="10" stroke-linecap="round"/>
+          <!-- Needle -->
+          <line id="needle" x1="60" y1="65" x2="60" y2="18" stroke="#ffaa00" stroke-width="2.5" stroke-linecap="round" transform="rotate(-15 60 65)"/>
+          <circle cx="60" cy="65" r="4" fill="#ffaa00"/>
+        </svg>
+        <div class="gauge-text">
+          <div class="gauge-score">52</div>
+          <div class="gauge-label">/ 100</div>
+        </div>
+      </div>
+      <div class="gauge-info">
+        <div class="gauge-title">중립 — 관망 구간</div>
+        <div class="gauge-desc">Fed 대차대조표 축소 지속, TGA 잔고 회복세, RRP 잔고 감소로 시중 유동성 소폭 개선 중. 국내 신용 잔고 증가세는 유의 필요.</div>
+        <div class="gauge-indicators">
+          <div class="gi-item">
+            <span class="gi-label">전주 대비</span>
+            <span class="gi-val" style="color:var(--up)">+3pt</span>
+          </div>
+          <div class="gi-item">
+            <span class="gi-label">전월 대비</span>
+            <span class="gi-val" style="color:var(--down)">-5pt</span>
+          </div>
+          <div class="gi-item">
+            <span class="gi-label">추세</span>
+            <span class="tag tag-warn">횡보</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 미국 증시 -->
+  <div class="section-anim">
+    <div class="section-label"><span>미국 증시</span></div>
+    <div class="grid-4">
+      <div class="card up">
+        <div class="card-tag">NYSE · INDEX</div>
+        <div class="card-name">S&P 500</div>
+        <div class="card-value big">5,667.20</div>
+        <div class="card-change up"><span class="arrow">▲</span> +78.35 (+1.40%)</div>
+        <div class="card-sub">52W H: 6,147 / L: 4,835</div>
+        <svg class="sparkline-wrap" viewBox="0 0 80 40" preserveAspectRatio="none">
+          <polyline points="0,32 10,28 20,30 30,22 40,18 50,24 60,16 70,12 80,10" fill="none" stroke="rgba(0,229,160,0.6)" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="card up">
+        <div class="card-tag">NASDAQ · INDEX</div>
+        <div class="card-name">나스닥 종합</div>
+        <div class="card-value big">17,754.82</div>
+        <div class="card-change up"><span class="arrow">▲</span> +245.12 (+1.40%)</div>
+        <div class="card-sub">52W H: 20,109 / L: 15,708</div>
+        <svg class="sparkline-wrap" viewBox="0 0 80 40" preserveAspectRatio="none">
+          <polyline points="0,35 10,30 20,28 30,20 40,22 50,18 60,14 70,10 80,8" fill="none" stroke="rgba(0,229,160,0.6)" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="card down">
+        <div class="card-tag">NYSE · INDEX</div>
+        <div class="card-name">다우 존스 산업평균</div>
+        <div class="card-value big">41,480.40</div>
+        <div class="card-change down"><span class="arrow">▼</span> -112.22 (-0.27%)</div>
+        <div class="card-sub">52W H: 45,073 / L: 36,611</div>
+        <svg class="sparkline-wrap" viewBox="0 0 80 40" preserveAspectRatio="none">
+          <polyline points="0,10 10,14 20,12 30,18 40,16 50,22 60,20 70,28 80,32" fill="none" stroke="rgba(255,68,102,0.6)" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="card up">
+        <div class="card-tag">CBOE · VOLATILITY</div>
+        <div class="card-name">VIX 변동성 지수</div>
+        <div class="card-value big">23.45</div>
+        <div class="card-change down"><span class="arrow">▼</span> -1.82 (-7.20%)</div>
+        <div class="card-sub">공포 구간: 20 이상</div>
+        <svg class="sparkline-wrap" viewBox="0 0 80 40" preserveAspectRatio="none">
+          <polyline points="0,15 10,10 20,18 30,8 40,14 50,6 60,12 70,20 80,22" fill="none" stroke="rgba(255,170,0,0.6)" stroke-width="1.5"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- 국내 증시 -->
+  <div class="section-anim">
+    <div class="section-label"><span>국내 증시</span></div>
+    <div class="grid-4">
+      <div class="card down">
+        <div class="card-tag">KRX · INDEX</div>
+        <div class="card-name">KOSPI</div>
+        <div class="card-value big">2,559.79</div>
+        <div class="card-change down"><span class="arrow">▼</span> -18.44 (-0.71%)</div>
+        <div class="card-sub">거래대금: 8.2조 원</div>
+      </div>
+      <div class="card down">
+        <div class="card-tag">KRX · INDEX</div>
+        <div class="card-name">KOSDAQ</div>
+        <div class="card-value big">724.38</div>
+        <div class="card-change down"><span class="arrow">▼</span> -6.12 (-0.84%)</div>
+        <div class="card-sub">거래대금: 4.1조 원</div>
+      </div>
+      <div class="card neutral">
+        <div class="card-tag">KRX · FUTURES</div>
+        <div class="card-name">코스피 200 선물</div>
+        <div class="card-value big">338.80</div>
+        <div class="card-change down"><span class="arrow">▼</span> -2.45 (-0.72%)</div>
+        <div class="card-sub">미결제약정: 186,422계약</div>
+      </div>
+      <div class="card neutral">
+        <div class="card-tag">FEAR & GREED</div>
+        <div class="card-name">국내 투자심리</div>
+        <div class="card-value big">38</div>
+        <div class="card-change neutral"><span style="color:var(--warn)">■</span> 공포 구간</div>
+        <div class="card-sub">전주: 45 / 중립: 50</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 환율 -->
+  <div class="section-anim">
+    <div class="section-label"><span>환율</span></div>
+    <div class="grid-5">
+      <div class="card up">
+        <div class="card-tag">USD/KRW</div>
+        <div class="card-name">달러-원</div>
+        <div class="card-value">1,461.50</div>
+        <div class="card-change up"><span class="arrow">▲</span> +4.50 (+0.31%)</div>
+      </div>
+      <div class="card up">
+        <div class="card-tag">EUR/KRW</div>
+        <div class="card-name">유로-원</div>
+        <div class="card-value">1,588.30</div>
+        <div class="card-change up"><span class="arrow">▲</span> +7.20 (+0.46%)</div>
+      </div>
+      <div class="card down">
+        <div class="card-tag">JPY/KRW (100¥)</div>
+        <div class="card-name">엔-원 (100엔)</div>
+        <div class="card-value">978.45</div>
+        <div class="card-change down"><span class="arrow">▼</span> -2.15 (-0.22%)</div>
+      </div>
+      <div class="card neutral">
+        <div class="card-tag">DXY · INDEX</div>
+        <div class="card-name">달러 인덱스</div>
+        <div class="card-value">103.82</div>
+        <div class="card-change down"><span class="arrow">▼</span> -0.22 (-0.21%)</div>
+      </div>
+      <div class="card up">
+        <div class="card-tag">USD/CNY</div>
+        <div class="card-name">달러-위안</div>
+        <div class="card-value">7.2450</div>
+        <div class="card-change up"><span class="arrow">▲</span> +0.0080</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 국채 금리 -->
+  <div class="section-anim">
+    <div class="section-label"><span>국채 금리</span></div>
+    <div class="three-col">
+      <div class="card-wide">
+        <div class="card-tag" style="margin-bottom:0.8rem">미국 국채 수익률 곡선 · US TREASURY YIELD CURVE</div>
+        <table class="data-table">
+          <thead><tr>
+            <th>만기</th>
+            <th style="text-align:right">금리(%)</th>
+            <th style="text-align:right">전일비</th>
+            <th>추세</th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="td-name">2년물</td><td class="td-val">4.025</td><td class="td-chg down">▼ -0.028</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:80%;background:var(--down)"></div></div></td></tr>
+            <tr><td class="td-name">5년물</td><td class="td-val">4.102</td><td class="td-chg down">▼ -0.015</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:82%;background:var(--down)"></div></div></td></tr>
+            <tr><td class="td-name">10년물</td><td class="td-val">4.258</td><td class="td-chg up">▲ +0.012</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:85%;background:var(--up)"></div></div></td></tr>
+            <tr><td class="td-name">30년물</td><td class="td-val">4.612</td><td class="td-chg up">▲ +0.018</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:92%;background:var(--up)"></div></div></td></tr>
+            <tr><td class="td-name">10Y-2Y 스프레드</td><td class="td-val">+0.233</td><td class="td-chg up" style="color:var(--up)">▲ 정상화</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:40%;background:var(--blue)"></div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-wide">
+        <div class="card-tag" style="margin-bottom:0.8rem">한국 국채 수익률 · KTB YIELD</div>
+        <table class="data-table">
+          <thead><tr>
+            <th>만기</th>
+            <th style="text-align:right">금리(%)</th>
+            <th style="text-align:right">전일비</th>
+            <th>추세</th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="td-name">1년물</td><td class="td-val">2.848</td><td class="td-chg down">▼ -0.012</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:57%;background:var(--down)"></div></div></td></tr>
+            <tr><td class="td-name">3년물</td><td class="td-val">2.912</td><td class="td-chg up">▲ +0.005</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:58%;background:var(--up)"></div></div></td></tr>
+            <tr><td class="td-name">5년물</td><td class="td-val">3.025</td><td class="td-chg up">▲ +0.008</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:60%;background:var(--up)"></div></div></td></tr>
+            <tr><td class="td-name">10년물</td><td class="td-val">3.145</td><td class="td-chg up">▲ +0.012</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:63%;background:var(--up)"></div></div></td></tr>
+            <tr><td class="td-name">기준금리 (한은)</td><td class="td-val">2.75</td><td class="td-chg neutral" style="color:var(--blue)">— 동결</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:55%;background:var(--blue)"></div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-wide">
+        <div class="card-tag" style="margin-bottom:0.8rem">크레딧 스프레드 · CREDIT SPREADS</div>
+        <table class="data-table">
+          <thead><tr>
+            <th>지표</th>
+            <th style="text-align:right">bp</th>
+            <th style="text-align:right">전주비</th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="td-name">US HY 스프레드</td><td class="td-val">312bp</td><td class="td-chg up">▲ +8bp</td></tr>
+            <tr><td class="td-name">US IG 스프레드</td><td class="td-val">98bp</td><td class="td-chg up">▲ +3bp</td></tr>
+            <tr><td class="td-name">국내 AA- 회사채</td><td class="td-val">3.88%</td><td class="td-chg up">▲ +0.05</td></tr>
+            <tr><td class="td-name">국내 BBB- 회사채</td><td class="td-val">8.12%</td><td class="td-chg up">▲ +0.18</td></tr>
+            <tr><td class="td-name">LIBOR-OIS 스프레드</td><td class="td-val">14bp</td><td class="td-chg neutral" style="color:var(--blue)">— 정상</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fed 유동성 지표 -->
+  <div class="section-anim">
+    <div class="section-label"><span>미국 연방준비제도 — 유동성 지표</span></div>
+    <div class="grid-4">
+      <!-- TGA -->
+      <div class="card neutral">
+        <div class="card-tag">US TREASURY · TGA</div>
+        <div class="card-name">재무부 일반계정 잔고<br><span style="font-size:0.65rem;color:var(--text-dim)">Treasury General Account</span></div>
+        <div class="card-value">$7,456억</div>
+        <div class="card-change up"><span class="arrow">▲</span> +$840억 (주간)</div>
+        <div class="card-sub">잔고 증가 → 시중 유동성 ↓</div>
+        <div style="margin-top:0.8rem">
+          <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--text-dim);margin-bottom:0.3rem;font-family:'JetBrains Mono',monospace">
+            <span>$0</span><span>현재 $7,456억</span><span>$1.5조</span>
+          </div>
+          <div class="balance-bar-bg" style="height:8px;flex:none">
+            <div class="balance-bar-fill" style="width:50%;background:linear-gradient(90deg,var(--blue),var(--cyan))"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RRP -->
+      <div class="card up">
+        <div class="card-tag">FED · RRP</div>
+        <div class="card-name">역레포 잔고<br><span style="font-size:0.65rem;color:var(--text-dim)">Reverse Repo Program</span></div>
+        <div class="card-value">$1,234억</div>
+        <div class="card-change down"><span class="arrow">▼</span> -$320억 (주간)</div>
+        <div class="card-sub">잔고 감소 → 시중 유동성 ↑</div>
+        <div style="margin-top:0.8rem">
+          <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--text-dim);margin-bottom:0.3rem;font-family:'JetBrains Mono',monospace">
+            <span>$0</span><span>현재 $1,234억</span><span>$2.5조</span>
+          </div>
+          <div class="balance-bar-bg" style="height:8px;flex:none">
+            <div class="balance-bar-fill" style="width:5%;background:linear-gradient(90deg,var(--up),#00cc88)"></div>
+          </div>
+        </div>
+        <div style="margin-top:0.5rem"><span class="tag tag-up">역대 저점 근접</span></div>
+      </div>
+
+      <!-- Fed Balance Sheet -->
+      <div class="card down" style="grid-column: span 2;">
+        <div class="card-tag">FED · BALANCE SHEET</div>
+        <div class="card-name" style="margin-bottom:0.4rem">연방준비제도 대차대조표 · Federal Reserve Balance Sheet</div>
+        <div style="display:flex;align-items:baseline;gap:1rem;margin-bottom:0.8rem">
+          <div class="card-value">$6.762조</div>
+          <div class="card-change down"><span class="arrow">▼</span> -$420억 (주간) · QT 진행 중</div>
+        </div>
+        <div class="balance-bar-wrap">
+          <div class="balance-row">
+            <span class="balance-label">국채 (Treasury)</span>
+            <div class="balance-bar-bg"><div class="balance-bar-fill" style="width:72%;background:linear-gradient(90deg,var(--blue),var(--cyan))"></div></div>
+            <span class="balance-val">$4.872조</span>
+          </div>
+          <div class="balance-row">
+            <span class="balance-label">MBS</span>
+            <div class="balance-bar-bg"><div class="balance-bar-fill" style="width:26%;background:linear-gradient(90deg,var(--purple),#8844ff)"></div></div>
+            <span class="balance-val">$2.329조 (잔여)</span>
+          </div>
+          <div class="balance-row">
+            <span class="balance-label">기타 자산</span>
+            <div class="balance-bar-bg"><div class="balance-bar-fill" style="width:2%;background:var(--text-dim)"></div></div>
+            <span class="balance-val">$0.154조</span>
+          </div>
+        </div>
+        <div style="margin-top:0.8rem;font-size:0.68rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace">
+          고점(2022.04): $8.97조 → 현재: $6.76조 | 축소 규모: $2.21조 (-24.6%)
+        </div>
+      </div>
+    </div>
+
+    <!-- Reserves -->
+    <div style="margin-top:1px">
+      <div class="card-wide" style="margin-top:1.2rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+          <div>
+            <div class="card-tag">FED · RESERVE BALANCES</div>
+            <div class="card-name" style="margin:0.4rem 0 0">미국 지급준비금 · Bank Reserve Balances at Fed</div>
+          </div>
+          <div style="text-align:right">
+            <div class="card-value">$3.248조</div>
+            <div class="card-change up"><span class="arrow">▲</span> +$180억 (주간)</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem">
+          <div style="background:rgba(0,170,255,0.05);border:1px solid rgba(0,170,255,0.15);border-radius:6px;padding:0.8rem">
+            <div style="font-size:0.62rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem">SOFR</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--text-bright);font-weight:600">4.30%</div>
+            <div style="font-size:0.65rem;color:var(--text-dim);margin-top:0.2rem">담보부 익일물</div>
+          </div>
+          <div style="background:rgba(0,170,255,0.05);border:1px solid rgba(0,170,255,0.15);border-radius:6px;padding:0.8rem">
+            <div style="font-size:0.62rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem">EFFR</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--text-bright);font-weight:600">4.33%</div>
+            <div style="font-size:0.65rem;color:var(--text-dim);margin-top:0.2rem">실효연방기금금리</div>
+          </div>
+          <div style="background:rgba(0,170,255,0.05);border:1px solid rgba(0,170,255,0.15);border-radius:6px;padding:0.8rem">
+            <div style="font-size:0.62rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem">IORB</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--text-bright);font-weight:600">4.40%</div>
+            <div style="font-size:0.65rem;color:var(--text-dim);margin-top:0.2rem">지준 이자율</div>
+          </div>
+          <div style="background:rgba(170,102,255,0.05);border:1px solid rgba(170,102,255,0.15);border-radius:6px;padding:0.8rem">
+            <div style="font-size:0.62rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem">준비금 적정성</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--warn);font-weight:600">충분</div>
+            <div style="font-size:0.65rem;color:var(--text-dim);margin-top:0.2rem">LCLoR 추정: $3.0조</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 국내 공매도 & 신용거래 -->
+  <div class="section-anim">
+    <div class="section-label"><span>국내증시 — 수급 현황</span></div>
+    <div class="two-col">
+      <!-- 공매도 -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+          <div>
+            <div class="card-tag">KRX · SHORT SELLING</div>
+            <div class="card-name" style="margin:0.4rem 0 0">공매도 잔고 현황</div>
+          </div>
+          <span class="tag tag-warn">부분 허용 중</span>
+        </div>
+        <table class="data-table">
+          <thead><tr>
+            <th>구분</th>
+            <th style="text-align:right">잔고 (억원)</th>
+            <th style="text-align:right">전주비</th>
+            <th style="text-align:right">비중</th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="td-name">KOSPI 공매도</td><td class="td-val">68,420</td><td class="td-chg up">▲ +2,140</td><td class="td-val">0.84%</td></tr>
+            <tr><td class="td-name">KOSDAQ 공매도</td><td class="td-val">12,880</td><td class="td-chg up">▲ +560</td><td class="td-val">0.62%</td></tr>
+            <tr><td class="td-name">외국인 비중</td><td class="td-val" style="color:var(--down)">72.4%</td><td class="td-chg down">▼ -1.2%p</td><td class="td-val">—</td></tr>
+            <tr><td class="td-name">기관 비중</td><td class="td-val">22.1%</td><td class="td-chg up">▲ +0.8%p</td><td class="td-val">—</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:1rem;font-size:0.68rem;color:var(--text-dim);border-top:1px solid var(--border);padding-top:0.8rem;font-family:'JetBrains Mono',monospace;line-height:1.8">
+          공매도 잔고 상위: 삼성전자 / SK하이닉스 / 카카오 / NAVER / 셀트리온
+        </div>
+      </div>
+
+      <!-- 신용거래 -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+          <div>
+            <div class="card-tag">KRX · MARGIN TRADING</div>
+            <div class="card-name" style="margin:0.4rem 0 0">신용거래 현황</div>
+          </div>
+          <span class="tag tag-down">주의 수준</span>
+        </div>
+        <table class="data-table">
+          <thead><tr>
+            <th>구분</th>
+            <th style="text-align:right">잔고 (억원)</th>
+            <th style="text-align:right">전주비</th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="td-name">신용융자 잔고 (KOSPI)</td><td class="td-val" style="color:var(--down)">98,240</td><td class="td-chg up">▲ +2,880</td></tr>
+            <tr><td class="td-name">신용융자 잔고 (KOSDAQ)</td><td class="td-val" style="color:var(--down)">64,150</td><td class="td-chg up">▲ +1,640</td></tr>
+            <tr><td class="td-name">신용융자 합계</td><td class="td-val" style="color:var(--down)">162,390</td><td class="td-chg up">▲ +4,520</td></tr>
+            <tr><td class="td-name">반대매매 규모 (일)</td><td class="td-val" style="color:var(--warn)">420</td><td class="td-chg down">▼ -80</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:0.8rem">
+          <div style="font-size:0.65rem;color:var(--text-dim);margin-bottom:0.3rem;font-family:'JetBrains Mono',monospace">신용잔고 / 시가총액 비율 (KOSPI)</div>
+          <div class="balance-bar-bg" style="height:8px;flex:none">
+            <div class="balance-bar-fill" style="width:68%;background:linear-gradient(90deg,var(--warn),var(--down))"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.62rem;color:var(--text-dim);margin-top:0.3rem;font-family:'JetBrains Mono',monospace">
+            <span>0%</span><span style="color:var(--warn)">현재 1.24% (주의)</span><span>2%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 원자재 & 가상자산 -->
+  <div class="section-anim">
+    <div class="section-label"><span>원자재 · 가상자산 (참고)</span></div>
+    <div class="grid-4">
+      <div class="card up">
+        <div class="card-tag">COMEX · GOLD</div>
+        <div class="card-name">금 (Gold)</div>
+        <div class="card-value">$3,021.40</div>
+        <div class="card-change up"><span class="arrow">▲</span> +18.60 (+0.62%)</div>
+      </div>
+      <div class="card down">
+        <div class="card-tag">NYMEX · WTI</div>
+        <div class="card-name">WTI 원유</div>
+        <div class="card-value">$67.84</div>
+        <div class="card-change down"><span class="arrow">▼</span> -1.22 (-1.77%)</div>
+      </div>
+      <div class="card up">
+        <div class="card-tag">CRYPTO · BTC</div>
+        <div class="card-name">비트코인 (BTC/USD)</div>
+        <div class="card-value">$84,250</div>
+        <div class="card-change up"><span class="arrow">▲</span> +1,840 (+2.23%)</div>
+      </div>
+      <div class="card neutral">
+        <div class="card-tag">CRYPTO · ETH</div>
+        <div class="card-name">이더리움 (ETH/USD)</div>
+        <div class="card-value">$1,920</div>
+        <div class="card-change down"><span class="arrow">▼</span> -42 (-2.14%)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    ⚠ 본 페이지에 표시된 데이터는 참고용 샘플 데이터입니다. 실제 투자 결정에 활용하지 마십시오.<br>
+    실제 서비스 구현 시 Yahoo Finance API, FRED API, KRX OpenAPI, 한국은행 ECOS API 등을 연동하여 실시간 데이터를 표시할 수 있습니다.<br>
+    데이터 출처: Fed H.4.1, NY Fed RRP, KRX, FRED, Bloomberg (참고 기준)
+  </div>
+
+</div>
+
+<script>
+// Clock
+function updateClock() {
+  const now = new Date();
+  const opts = { timeZone: 'Asia/Seoul', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
+  const kst = now.toLocaleTimeString('ko-KR', opts);
+  document.getElementById('clock').textContent = 'KST ' + kst;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// Ticker
+const tickerData = [
+  { sym: 'S&P500', val: '5,667.20', chg: '+1.40%', up: true },
+  { sym: 'NASDAQ', val: '17,754.82', chg: '+1.40%', up: true },
+  { sym: 'DOW', val: '41,480.40', chg: '-0.27%', up: false },
+  { sym: 'KOSPI', val: '2,559.79', chg: '-0.71%', up: false },
+  { sym: 'KOSDAQ', val: '724.38', chg: '-0.84%', up: false },
+  { sym: 'USD/KRW', val: '1,461.50', chg: '+0.31%', up: true },
+  { sym: 'USD/JPY', val: '149.82', chg: '+0.18%', up: true },
+  { sym: 'DXY', val: '103.82', chg: '-0.21%', up: false },
+  { sym: 'US10Y', val: '4.258%', chg: '+1.2bp', up: true },
+  { sym: 'KTB10Y', val: '3.145%', chg: '+1.2bp', up: true },
+  { sym: 'VIX', val: '23.45', chg: '-7.20%', up: false },
+  { sym: 'GOLD', val: '$3,021', chg: '+0.62%', up: true },
+  { sym: 'WTI', val: '$67.84', chg: '-1.77%', up: false },
+  { sym: 'BTC', val: '$84,250', chg: '+2.23%', up: true },
+  { sym: 'FED-RRP', val: '$1,234억', chg: '-$320억', up: false },
+  { sym: 'FED-TGA', val: '$7,456억', chg: '+$840억', up: true },
+];
+
+const ticker = document.getElementById('ticker');
+const items = [...tickerData, ...tickerData].map(d => {
+  return `<span class="ticker-item">
+    <span class="ticker-sym">${d.sym}</span>
+    <span class="ticker-val">${d.val}</span>
+    <span class="ticker-chg ${d.up ? 'up' : 'down'}">${d.chg}</span>
+  </span><span class="ticker-sep">|</span>`;
+}).join('');
+ticker.innerHTML = items;
+</script>
+</body>
+</html>
