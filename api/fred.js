@@ -1,71 +1,72 @@
 export const config = { runtime: 'edge' };
 
-// FRED 시리즈 코드
 const SERIES = {
-  WALCL:     'fed_balance_sheet',  // Fed 대차대조표 (단위: 백만달러)
-  WRESBAL:   'reserves',           // 지급준비금
-  RRPONTSYD: 'rrp',                // RRP 역레포 잔고
-  WTREGEN:   'tga',                // TGA 재무부 일반계정
+  WALCL:     'fed_balance_sheet',
+  WRESBAL:   'reserves',
+  RRPONTSYD: 'rrp',
+  WTREGEN:   'tga',
 };
 
-async function fetchSeries(id, apiKey) {
-  const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${id}&api_key=${apiKey}&file_type=json&sort_order=desc&limit=2`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`FRED ${id} error: ${res.status}`);
-  const json = await res.json();
-  const obs = json.observations ?? [];
-  // 최신 유효값 찾기 (missing value = '.')
-  const latest = obs.find(o => o.value !== '.');
-  const prev   = obs.filter(o => o.value !== '.')[1];
-  return {
-    value:  latest ? parseFloat(latest.value) : null,
-    date:   latest?.date ?? null,
-    prev:   prev   ? parseFloat(prev.value)   : null,
-  };
+async function fetchOne(id, apiKey) {
+  const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${id}&api_key=${apiKey}&file_type=json&sort_order=desc&limit=2&realtime_start=2020-01-01`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 6000); // 6초 타임아웃
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const json = await res.json();
+    const obs = (json.observations ?? []).filter(o => o.value !== '.');
+    const latest = obs[0];
+    const prev   = obs[1];
+    return {
+      value:  latest ? parseFloat(latest.value) : null,
+      date:   latest?.date ?? null,
+      prev:   prev   ? parseFloat(prev.value)   : null,
+    };
+  } catch {
+    clearTimeout(timer);
+    return null;
+  }
 }
 
 export default async function handler() {
   const apiKey = process.env.FRED_API_KEY;
   if (!apiKey) {
-    return new Response(JSON.stringify({ ok: false, error: 'FRED_API_KEY 환경변수 없음' }), {
+    return new Response(JSON.stringify({ ok: false, error: 'FRED_API_KEY 없음' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   }
 
-  try {
-    // 병렬로 4개 시리즈 동시 조회
-    const results = await Promise.all(
-      Object.keys(SERIES).map(id => fetchSeries(id, apiKey))
-    );
+  // 4개 동시 요청 (Promise.allSettled — 하나 실패해도 나머지 반환)
+  const entries = Object.entries(SERIES);
+  const results = await Promise.allSettled(
+    entries.map(([id]) => fetchOne(id, apiKey))
+  );
 
-    const data = {};
-    Object.entries(SERIES).forEach(([id, key], i) => {
-      const r = results[i];
-      // 단위 변환: FRED는 백만달러 → 억달러로 표시
-      const toHundredMillion = v => v ? Math.round(v / 100) : null;
-      data[key] = {
-        raw:    r.value,
-        value:  toHundredMillion(r.value),   // 억달러
-        prev:   toHundredMillion(r.prev),
-        change: r.value && r.prev ? toHundredMillion(r.value - r.prev) : null,
-        date:   r.date,
-        unit:   '억달러',
-      };
-    });
+  const toHundredMillion = v => v != null ? Math.round(v / 100) : null;
 
-    return new Response(JSON.stringify({ ok: true, data, ts: Date.now() }), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 's-maxage=3600', // 1시간 캐시 (주간 데이터라 충분)
-      },
-    });
+  const data = {};
+  entries.forEach(([id, key], i) => {
+    const r = results[i].status === 'fulfilled' ? results[i].value : null;
+    if (!r) { data[key] = null; return; }
+    const val  = toHundredMillion(r.value);
+    const prev = toHundredMillion(r.prev);
+    data[key] = {
+      value:  val,
+      prev:   prev,
+      change: val != null && prev != null ? val - prev : null,
+      date:   r.date,
+      unit:   '억달러',
+    };
+  });
 
-  } catch (e) {
-    return new Response(JSON.stringify({ ok: false, error: e.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    });
-  }
+  return new Response(JSON.stringify({ ok: true, data, ts: Date.now() }), {
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 's-maxage=3600, stale-while-revalidate=300',
+    },
+  });
 }
