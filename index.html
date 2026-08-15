@@ -596,7 +596,7 @@
 
   <!-- 오늘의 시장 강도 (메인 지표) -->
   <div class="section-anim" style="animation-delay:0.02s">
-    <div class="section-label"><span>오늘의 시장 강도 · 단기 매매 적합도</span></div>
+    <div class="section-label"><span>오늘의 시장 강도 · 단기 매매 적합도 — 주식(KOSPI)</span></div>
     <div class="gauge-section">
       <div class="gauge-wrap">
         <svg class="gauge-svg" viewBox="0 0 120 70" width="120" height="70">
@@ -604,29 +604,29 @@
           <path d="M 10 65 A 55 55 0 0 1 43 19" fill="none" stroke="rgba(255,68,102,0.5)" stroke-width="10" stroke-linecap="round"/>
           <path d="M 43 19 A 55 55 0 0 1 77 19" fill="none" stroke="rgba(255,170,0,0.5)" stroke-width="10" stroke-linecap="round"/>
           <path d="M 77 19 A 55 55 0 0 1 110 65" fill="none" stroke="rgba(0,229,160,0.5)" stroke-width="10" stroke-linecap="round"/>
-          <line id="strength-needle" x1="60" y1="65" x2="60" y2="18" stroke="#ffaa00" stroke-width="2.5" stroke-linecap="round" transform="rotate(0 60 65)"/>
+          <line id="stock-strength-needle" x1="60" y1="65" x2="60" y2="18" stroke="#ffaa00" stroke-width="2.5" stroke-linecap="round" transform="rotate(0 60 65)"/>
           <circle cx="60" cy="65" r="4" fill="#ffaa00"/>
         </svg>
         <div class="gauge-text">
-          <div class="gauge-score" id="strength-score">—</div>
+          <div class="gauge-score" id="stock-strength-score">—</div>
           <div class="gauge-label">/ 100</div>
         </div>
       </div>
       <div class="gauge-info">
-        <div class="gauge-title" id="strength-title">데이터 로딩 중...</div>
+        <div class="gauge-title" id="stock-strength-title">데이터 로딩 중...</div>
         <div class="gauge-desc">KOSPI 등락률 · 거래량(20일 평균 대비) · VIX를 종합한 휴리스틱 지표입니다. 특정 매매를 권유하는 지표가 아니며, 참고용으로만 활용하세요.</div>
         <div class="gauge-indicators">
           <div class="gi-item">
             <span class="gi-label">거래량 배율(20일 평균 대비)</span>
-            <span class="gi-val" id="strength-volratio">—</span>
+            <span class="gi-val" id="stock-strength-volratio">—</span>
           </div>
           <div class="gi-item">
             <span class="gi-label">오늘 등락률</span>
-            <span class="gi-val" id="strength-pct">—</span>
+            <span class="gi-val" id="stock-strength-pct">—</span>
           </div>
           <div class="gi-item">
             <span class="gi-label">추정 거래대금</span>
-            <span class="gi-val" id="strength-value">—</span>
+            <span class="gi-val" id="stock-strength-value">—</span>
           </div>
         </div>
       </div>
@@ -636,23 +636,23 @@
     <div class="two-col" style="margin-top:1.2rem">
       <div class="card up">
         <div class="card-tag">최근 60거래일 중 · BEST DAY</div>
-        <div class="card-name" id="best-day-date">—</div>
-        <div class="card-value" id="best-day-pct">—</div>
-        <div class="card-sub" id="best-day-volume">거래량 —</div>
+        <div class="card-name" id="stock-best-day-date">—</div>
+        <div class="card-value" id="stock-best-day-pct">—</div>
+        <div class="card-sub" id="stock-best-day-volume">거래량 —</div>
       </div>
       <div class="card down">
         <div class="card-tag">최근 60거래일 중 · WORST DAY</div>
-        <div class="card-name" id="worst-day-date">—</div>
-        <div class="card-value" id="worst-day-pct">—</div>
-        <div class="card-sub" id="worst-day-volume">거래량 —</div>
+        <div class="card-name" id="stock-worst-day-date">—</div>
+        <div class="card-value" id="stock-worst-day-pct">—</div>
+        <div class="card-sub" id="stock-worst-day-volume">거래량 —</div>
       </div>
     </div>
 
     <!-- 시간대별 거래량 추이 -->
     <div class="card-wide" style="margin-top:1.2rem">
       <div class="card-tag" style="margin-bottom:0.8rem">KOSPI · 시간대별 거래량 추이 (지수 기준 근사치)</div>
-      <svg id="intraday-chart" viewBox="0 0 800 120" width="100%" height="120" preserveAspectRatio="none"></svg>
-      <div class="card-sub" style="margin-top:0.5rem" id="intraday-status">5분 간격 · 실제 원화 거래대금과는 차이가 있을 수 있습니다</div>
+      <svg id="stock-intraday-chart" viewBox="0 0 800 120" width="100%" height="120" preserveAspectRatio="none"></svg>
+      <div class="card-sub" style="margin-top:0.5rem" id="stock-intraday-status">5분 간격 · 실제 원화 거래대금과는 차이가 있을 수 있습니다</div>
     </div>
 
     <!-- 투자자별 매매동향 (KRX 승인 후 연동 예정) -->
@@ -675,6 +675,68 @@
         <div class="card-value" style="color:var(--text-dim);font-size:1.1rem">준비 중</div>
         <div class="card-sub">KRX API 승인 후 연동 예정</div>
       </div>
+    </div>
+  </div>
+
+  <!-- 오늘의 시장 강도 — 코인(BTC 기준) -->
+  <div class="section-anim" style="animation-delay:0.03s">
+    <div class="section-label"><span>오늘의 시장 강도 · 단기 매매 적합도 — 코인(BTC 기준)</span></div>
+    <div class="gauge-section">
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" viewBox="0 0 120 70" width="120" height="70">
+          <path d="M 10 65 A 55 55 0 0 1 110 65" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10" stroke-linecap="round"/>
+          <path d="M 10 65 A 55 55 0 0 1 43 19" fill="none" stroke="rgba(255,68,102,0.5)" stroke-width="10" stroke-linecap="round"/>
+          <path d="M 43 19 A 55 55 0 0 1 77 19" fill="none" stroke="rgba(255,170,0,0.5)" stroke-width="10" stroke-linecap="round"/>
+          <path d="M 77 19 A 55 55 0 0 1 110 65" fill="none" stroke="rgba(0,229,160,0.5)" stroke-width="10" stroke-linecap="round"/>
+          <line id="crypto-strength-needle" x1="60" y1="65" x2="60" y2="18" stroke="#ffaa00" stroke-width="2.5" stroke-linecap="round" transform="rotate(0 60 65)"/>
+          <circle cx="60" cy="65" r="4" fill="#ffaa00"/>
+        </svg>
+        <div class="gauge-text">
+          <div class="gauge-score" id="crypto-strength-score">—</div>
+          <div class="gauge-label">/ 100</div>
+        </div>
+      </div>
+      <div class="gauge-info">
+        <div class="gauge-title" id="crypto-strength-title">데이터 로딩 중...</div>
+        <div class="gauge-desc">BTC 등락률 · 거래량(20일 평균 대비) · 실현 변동성(최근 20일 표준편차)을 종합한 휴리스틱 지표입니다. 코인 시장은 VIX 같은 무료 공포지수가 없어 자체 계산한 변동성을 사용합니다. 참고용으로만 활용하세요.</div>
+        <div class="gauge-indicators">
+          <div class="gi-item">
+            <span class="gi-label">거래량 배율(20일 평균 대비)</span>
+            <span class="gi-val" id="crypto-strength-volratio">—</span>
+          </div>
+          <div class="gi-item">
+            <span class="gi-label">오늘 등락률</span>
+            <span class="gi-val" id="crypto-strength-pct">—</span>
+          </div>
+          <div class="gi-item">
+            <span class="gi-label">실현 변동성(20일)</span>
+            <span class="gi-val" id="crypto-strength-vol">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 최고/최악의 날 비교 -->
+    <div class="two-col" style="margin-top:1.2rem">
+      <div class="card up">
+        <div class="card-tag">최근 60일 중 · BEST DAY</div>
+        <div class="card-name" id="crypto-best-day-date">—</div>
+        <div class="card-value" id="crypto-best-day-pct">—</div>
+        <div class="card-sub" id="crypto-best-day-volume">거래량 —</div>
+      </div>
+      <div class="card down">
+        <div class="card-tag">최근 60일 중 · WORST DAY</div>
+        <div class="card-name" id="crypto-worst-day-date">—</div>
+        <div class="card-value" id="crypto-worst-day-pct">—</div>
+        <div class="card-sub" id="crypto-worst-day-volume">거래량 —</div>
+      </div>
+    </div>
+
+    <!-- 시간대별 거래량 추이 -->
+    <div class="card-wide" style="margin-top:1.2rem">
+      <div class="card-tag" style="margin-bottom:0.8rem">BTC · 시간대별 거래량 추이 (24시간, 가격 기준 근사치)</div>
+      <svg id="crypto-intraday-chart" viewBox="0 0 800 120" width="100%" height="120" preserveAspectRatio="none"></svg>
+      <div class="card-sub" style="margin-top:0.5rem" id="crypto-intraday-status">5분 간격 · 실제 거래소 합산 거래대금과는 차이가 있을 수 있습니다</div>
     </div>
   </div>
 
@@ -1310,24 +1372,27 @@ fetchFredData();
 setInterval(fetchFredData, 60 * 60 * 1000);
 
 // =============================================
-// 오늘의 시장 강도 (단기 매매 적합도)
+// 오늘의 시장 강도 (단기 매매 적합도) — 주식/코인 공용 렌더링
 // =============================================
 let latestVix = null;
-let strengthData = null;
+let strengthData = null; // { stock: {...}, crypto: {...} }
 
 // 시장강도 스코어(0~100) 산출.
 // - 등락률: -25 ~ +25 기여 (등락률 1%당 8점)
 // - 거래량 배율: 오늘 등락 방향으로만 증폭 (상승+거래량많음=가산, 하락+거래량많음=감산)
 //   * 방향과 무관하게 무조건 가산하면 '폭락+거래량폭증'도 강세로 오판하므로 주의
-// - VIX: 낮을수록 가산(안정), 높을수록 감산(불안). 기준점 20
-function computeStrengthScore(pct, volumeRatio, vix) {
+// - 변동성 지표(VIX 또는 코인 실현변동성): 낮을수록 가산(안정), 높을수록 감산(불안)
+//   baseline은 자산군마다 다름 (주식 VIX는 20이 기준, 코인 실현변동성은 3.5%가 기준)
+function computeStrengthScore(pct, volumeRatio, volIndicator, baseline = 20, volWeight = 1) {
   let score = 50;
   if (pct != null) score += Math.max(-25, Math.min(25, pct * 8));
   if (pct != null && volumeRatio != null) {
     const volBoost = Math.max(0, Math.min(15, (volumeRatio - 1) * 15));
     score += Math.sign(pct) * volBoost;
   }
-  if (vix != null) score += Math.max(-15, Math.min(15, (20 - vix) * 1.0));
+  if (volIndicator != null) {
+    score += Math.max(-15, Math.min(15, (baseline - volIndicator) * volWeight));
+  }
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 
@@ -1339,12 +1404,12 @@ function strengthLabel(score) {
   return '매도 강세 — 변동성 주의';
 }
 
-function renderIntradayChart(intraday) {
-  const svg = document.getElementById('intraday-chart');
-  const status = document.getElementById('intraday-status');
+function renderIntradayChart(elId, statusId, intraday) {
+  const svg = document.getElementById(elId);
+  const status = document.getElementById(statusId);
   if (!svg) return;
   if (!intraday || intraday.length === 0) {
-    if (status) status.textContent = '장 마감 후에는 시간대별 데이터가 제공되지 않을 수 있습니다';
+    if (status) status.textContent = '지금은 시간대별 데이터가 제공되지 않을 수 있습니다';
     return;
   }
   const volumes = intraday.map(d => d.volume);
@@ -1360,52 +1425,73 @@ function renderIntradayChart(intraday) {
   svg.innerHTML = bars;
 }
 
-function renderStrengthGauge() {
-  if (!strengthData) return;
-  const { today, bestDay, worstDay, intraday } = strengthData;
-  const score = computeStrengthScore(today.pct, today.volumeRatio, latestVix);
+// prefix: 'stock' 또는 'crypto'. volIndicator/baseline/volWeight/volLabel로 자산군별 차이 처리.
+function renderStrengthSection(prefix, marketData, volIndicator, baseline, volWeight, volDisplay) {
+  if (!marketData) {
+    const titleEl = document.getElementById(`${prefix}-strength-title`);
+    if (titleEl) titleEl.textContent = '데이터 로드 실패';
+    return;
+  }
+  const { today, bestDay, worstDay, intraday } = marketData;
+  const score = computeStrengthScore(today.pct, today.volumeRatio, volIndicator, baseline, volWeight);
 
-  const scoreEl = document.getElementById('strength-score');
+  const scoreEl = document.getElementById(`${prefix}-strength-score`);
   if (scoreEl) scoreEl.textContent = score;
 
-  const titleEl = document.getElementById('strength-title');
+  const titleEl = document.getElementById(`${prefix}-strength-title`);
   if (titleEl) titleEl.textContent = strengthLabel(score);
 
-  const needle = document.getElementById('strength-needle');
+  const needle = document.getElementById(`${prefix}-strength-needle`);
   if (needle) {
-    const angle = -90 + (score / 100) * 180; // 0점=왼쪽 끝, 100점=오른쪽 끝
+    const angle = -90 + (score / 100) * 180;
     needle.setAttribute('transform', `rotate(${angle} 60 65)`);
   }
 
-  const volEl = document.getElementById('strength-volratio');
-  if (volEl && today.volumeRatio != null) volEl.textContent = today.volumeRatio.toFixed(2) + '배';
+  const volRatioEl = document.getElementById(`${prefix}-strength-volratio`);
+  if (volRatioEl && today.volumeRatio != null) volRatioEl.textContent = today.volumeRatio.toFixed(2) + '배';
 
-  const pctEl = document.getElementById('strength-pct');
+  const pctEl = document.getElementById(`${prefix}-strength-pct`);
   if (pctEl && today.pct != null) {
     pctEl.textContent = (today.pct >= 0 ? '+' : '') + today.pct.toFixed(2) + '%';
     pctEl.style.color = today.pct >= 0 ? 'var(--up)' : 'var(--down)';
   }
 
-  const valEl = document.getElementById('strength-value');
-  if (valEl && today.estTradingValue != null) {
-    valEl.textContent = (today.estTradingValue / 1e12).toFixed(1) + '조원(추정)';
-  }
+  if (volDisplay) volDisplay(today);
 
-  const bestDateEl = document.getElementById('best-day-date');
+  const bestDateEl = document.getElementById(`${prefix}-best-day-date`);
   if (bestDateEl) bestDateEl.textContent = bestDay.date;
-  const bestPctEl = document.getElementById('best-day-pct');
+  const bestPctEl = document.getElementById(`${prefix}-best-day-pct`);
   if (bestPctEl) { bestPctEl.textContent = '+' + bestDay.pct.toFixed(2) + '%'; bestPctEl.style.color = 'var(--up)'; }
-  const bestVolEl = document.getElementById('best-day-volume');
-  if (bestVolEl) bestVolEl.textContent = '거래량 ' + (bestDay.volume / 1e6).toFixed(1) + 'M주';
+  const bestVolEl = document.getElementById(`${prefix}-best-day-volume`);
+  if (bestVolEl) bestVolEl.textContent = '거래량 ' + (bestDay.volume / 1e6).toFixed(1) + 'M';
 
-  const worstDateEl = document.getElementById('worst-day-date');
+  const worstDateEl = document.getElementById(`${prefix}-worst-day-date`);
   if (worstDateEl) worstDateEl.textContent = worstDay.date;
-  const worstPctEl = document.getElementById('worst-day-pct');
+  const worstPctEl = document.getElementById(`${prefix}-worst-day-pct`);
   if (worstPctEl) { worstPctEl.textContent = worstDay.pct.toFixed(2) + '%'; worstPctEl.style.color = 'var(--down)'; }
-  const worstVolEl = document.getElementById('worst-day-volume');
-  if (worstVolEl) worstVolEl.textContent = '거래량 ' + (worstDay.volume / 1e6).toFixed(1) + 'M주';
+  const worstVolEl = document.getElementById(`${prefix}-worst-day-volume`);
+  if (worstVolEl) worstVolEl.textContent = '거래량 ' + (worstDay.volume / 1e6).toFixed(1) + 'M';
 
-  renderIntradayChart(intraday);
+  renderIntradayChart(`${prefix}-intraday-chart`, `${prefix}-intraday-status`, intraday);
+}
+
+function renderStrengthGauge() {
+  if (!strengthData) return;
+
+  // 주식(KOSPI) — VIX 기준(baseline 20)
+  renderStrengthSection('stock', strengthData.stock, latestVix, 20, 1, (today) => {
+    const valEl = document.getElementById('stock-strength-value');
+    if (valEl && today.estTradingValue != null) {
+      valEl.textContent = (today.estTradingValue / 1e12).toFixed(1) + '조원(추정)';
+    }
+  });
+
+  // 코인(BTC) — 실현 변동성 기준(baseline 3.5%). VIX보다 스케일이 작아 가중치를 3배로.
+  const cryptoVol = strengthData.crypto?.today?.realizedVol ?? null;
+  renderStrengthSection('crypto', strengthData.crypto, cryptoVol, 3.5, 3, (today) => {
+    const volEl = document.getElementById('crypto-strength-vol');
+    if (volEl && today.realizedVol != null) volEl.textContent = today.realizedVol.toFixed(2) + '%';
+  });
 }
 
 async function fetchMarketStrength() {
@@ -1418,8 +1504,10 @@ async function fetchMarketStrength() {
     renderStrengthGauge();
   } catch (e) {
     console.warn('시장강도 데이터 로드 실패:', e.message);
-    const titleEl = document.getElementById('strength-title');
-    if (titleEl) titleEl.textContent = '데이터 로드 실패';
+    ['stock-strength-title', 'crypto-strength-title'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = '데이터 로드 실패';
+    });
   }
 }
 
