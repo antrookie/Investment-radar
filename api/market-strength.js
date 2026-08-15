@@ -146,8 +146,8 @@ async function computeMarketData(symbol, auth, { intradaySymbol = symbol, chartR
       estTradingValue,
       realizedVol,
     },
-    bestDay: { date: bestDay.date, pct: bestDay.pct, volume: bestDay.volume },
-    worstDay: { date: worstDay.date, pct: worstDay.pct, volume: worstDay.volume },
+    bestDay: { date: bestDay.date, pct: bestDay.pct, volume: bestDay.volume, close: bestDay.close },
+    worstDay: { date: worstDay.date, pct: worstDay.pct, volume: worstDay.volume, close: worstDay.close },
     intraday,
   };
 }
