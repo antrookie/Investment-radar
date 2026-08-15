@@ -594,6 +594,90 @@
 
 <div class="main">
 
+  <!-- 오늘의 시장 강도 (메인 지표) -->
+  <div class="section-anim" style="animation-delay:0.02s">
+    <div class="section-label"><span>오늘의 시장 강도 · 단기 매매 적합도</span></div>
+    <div class="gauge-section">
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" viewBox="0 0 120 70" width="120" height="70">
+          <path d="M 10 65 A 55 55 0 0 1 110 65" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10" stroke-linecap="round"/>
+          <path d="M 10 65 A 55 55 0 0 1 43 19" fill="none" stroke="rgba(255,68,102,0.5)" stroke-width="10" stroke-linecap="round"/>
+          <path d="M 43 19 A 55 55 0 0 1 77 19" fill="none" stroke="rgba(255,170,0,0.5)" stroke-width="10" stroke-linecap="round"/>
+          <path d="M 77 19 A 55 55 0 0 1 110 65" fill="none" stroke="rgba(0,229,160,0.5)" stroke-width="10" stroke-linecap="round"/>
+          <line id="strength-needle" x1="60" y1="65" x2="60" y2="18" stroke="#ffaa00" stroke-width="2.5" stroke-linecap="round" transform="rotate(0 60 65)"/>
+          <circle cx="60" cy="65" r="4" fill="#ffaa00"/>
+        </svg>
+        <div class="gauge-text">
+          <div class="gauge-score" id="strength-score">—</div>
+          <div class="gauge-label">/ 100</div>
+        </div>
+      </div>
+      <div class="gauge-info">
+        <div class="gauge-title" id="strength-title">데이터 로딩 중...</div>
+        <div class="gauge-desc">KOSPI 등락률 · 거래량(20일 평균 대비) · VIX를 종합한 휴리스틱 지표입니다. 특정 매매를 권유하는 지표가 아니며, 참고용으로만 활용하세요.</div>
+        <div class="gauge-indicators">
+          <div class="gi-item">
+            <span class="gi-label">거래량 배율(20일 평균 대비)</span>
+            <span class="gi-val" id="strength-volratio">—</span>
+          </div>
+          <div class="gi-item">
+            <span class="gi-label">오늘 등락률</span>
+            <span class="gi-val" id="strength-pct">—</span>
+          </div>
+          <div class="gi-item">
+            <span class="gi-label">추정 거래대금</span>
+            <span class="gi-val" id="strength-value">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 최고/최악의 날 비교 -->
+    <div class="two-col" style="margin-top:1.2rem">
+      <div class="card up">
+        <div class="card-tag">최근 60거래일 중 · BEST DAY</div>
+        <div class="card-name" id="best-day-date">—</div>
+        <div class="card-value" id="best-day-pct">—</div>
+        <div class="card-sub" id="best-day-volume">거래량 —</div>
+      </div>
+      <div class="card down">
+        <div class="card-tag">최근 60거래일 중 · WORST DAY</div>
+        <div class="card-name" id="worst-day-date">—</div>
+        <div class="card-value" id="worst-day-pct">—</div>
+        <div class="card-sub" id="worst-day-volume">거래량 —</div>
+      </div>
+    </div>
+
+    <!-- 시간대별 거래량 추이 -->
+    <div class="card-wide" style="margin-top:1.2rem">
+      <div class="card-tag" style="margin-bottom:0.8rem">KOSPI · 시간대별 거래량 추이 (지수 기준 근사치)</div>
+      <svg id="intraday-chart" viewBox="0 0 800 120" width="100%" height="120" preserveAspectRatio="none"></svg>
+      <div class="card-sub" style="margin-top:0.5rem" id="intraday-status">5분 간격 · 실제 원화 거래대금과는 차이가 있을 수 있습니다</div>
+    </div>
+
+    <!-- 투자자별 매매동향 (KRX 승인 후 연동 예정) -->
+    <div class="grid-3" style="margin-top:1.2rem">
+      <div class="card neutral">
+        <div class="card-tag">KRX · INVESTOR FLOW</div>
+        <div class="card-name">외국인 순매수</div>
+        <div class="card-value" style="color:var(--text-dim);font-size:1.1rem">준비 중</div>
+        <div class="card-sub">KRX API 승인 후 연동 예정</div>
+      </div>
+      <div class="card neutral">
+        <div class="card-tag">KRX · INVESTOR FLOW</div>
+        <div class="card-name">기관 순매수</div>
+        <div class="card-value" style="color:var(--text-dim);font-size:1.1rem">준비 중</div>
+        <div class="card-sub">KRX API 승인 후 연동 예정</div>
+      </div>
+      <div class="card neutral">
+        <div class="card-tag">KRX · INVESTOR FLOW</div>
+        <div class="card-name">개인 순매수</div>
+        <div class="card-value" style="color:var(--text-dim);font-size:1.1rem">준비 중</div>
+        <div class="card-sub">KRX API 승인 후 연동 예정</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Liquidity Score Gauge -->
   <div class="section-anim" style="animation-delay:0.05s">
     <div class="section-label"><span>유동성 종합 지수</span></div>
@@ -1142,6 +1226,10 @@ async function fetchMarketData() {
     for (const [sym, d] of Object.entries(data)) {
       updateCard(sym, d);
     }
+    if (data['^VIX']?.price != null) {
+      latestVix = data['^VIX'].price;
+      renderStrengthGauge(); // VIX 갱신되면 시장강도 스코어도 재계산
+    }
     updateTicker(data);
     showLastUpdate();
   } catch (e) {
@@ -1220,6 +1308,123 @@ async function fetchFredData() {
 
 fetchFredData();
 setInterval(fetchFredData, 60 * 60 * 1000);
+
+// =============================================
+// 오늘의 시장 강도 (단기 매매 적합도)
+// =============================================
+let latestVix = null;
+let strengthData = null;
+
+// 시장강도 스코어(0~100) 산출.
+// - 등락률: -25 ~ +25 기여 (등락률 1%당 8점)
+// - 거래량 배율: 오늘 등락 방향으로만 증폭 (상승+거래량많음=가산, 하락+거래량많음=감산)
+//   * 방향과 무관하게 무조건 가산하면 '폭락+거래량폭증'도 강세로 오판하므로 주의
+// - VIX: 낮을수록 가산(안정), 높을수록 감산(불안). 기준점 20
+function computeStrengthScore(pct, volumeRatio, vix) {
+  let score = 50;
+  if (pct != null) score += Math.max(-25, Math.min(25, pct * 8));
+  if (pct != null && volumeRatio != null) {
+    const volBoost = Math.max(0, Math.min(15, (volumeRatio - 1) * 15));
+    score += Math.sign(pct) * volBoost;
+  }
+  if (vix != null) score += Math.max(-15, Math.min(15, (20 - vix) * 1.0));
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function strengthLabel(score) {
+  if (score >= 80) return '매수 강세 — 단기 매매 우호적';
+  if (score >= 60) return '매수 우위 — 긍정적';
+  if (score >= 40) return '중립 — 관망 구간';
+  if (score >= 20) return '매도 우위 — 신중 필요';
+  return '매도 강세 — 변동성 주의';
+}
+
+function renderIntradayChart(intraday) {
+  const svg = document.getElementById('intraday-chart');
+  const status = document.getElementById('intraday-status');
+  if (!svg) return;
+  if (!intraday || intraday.length === 0) {
+    if (status) status.textContent = '장 마감 후에는 시간대별 데이터가 제공되지 않을 수 있습니다';
+    return;
+  }
+  const volumes = intraday.map(d => d.volume);
+  const max = Math.max(...volumes, 1);
+  const w = 800, h = 120, barW = w / volumes.length;
+  let bars = '';
+  volumes.forEach((v, i) => {
+    const barH = Math.max(1, (v / max) * (h - 10));
+    const x = i * barW;
+    const y = h - barH;
+    bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(barW * 0.75).toFixed(1)}" height="${barH.toFixed(1)}" fill="rgba(0,229,160,0.5)"/>`;
+  });
+  svg.innerHTML = bars;
+}
+
+function renderStrengthGauge() {
+  if (!strengthData) return;
+  const { today, bestDay, worstDay, intraday } = strengthData;
+  const score = computeStrengthScore(today.pct, today.volumeRatio, latestVix);
+
+  const scoreEl = document.getElementById('strength-score');
+  if (scoreEl) scoreEl.textContent = score;
+
+  const titleEl = document.getElementById('strength-title');
+  if (titleEl) titleEl.textContent = strengthLabel(score);
+
+  const needle = document.getElementById('strength-needle');
+  if (needle) {
+    const angle = -90 + (score / 100) * 180; // 0점=왼쪽 끝, 100점=오른쪽 끝
+    needle.setAttribute('transform', `rotate(${angle} 60 65)`);
+  }
+
+  const volEl = document.getElementById('strength-volratio');
+  if (volEl && today.volumeRatio != null) volEl.textContent = today.volumeRatio.toFixed(2) + '배';
+
+  const pctEl = document.getElementById('strength-pct');
+  if (pctEl && today.pct != null) {
+    pctEl.textContent = (today.pct >= 0 ? '+' : '') + today.pct.toFixed(2) + '%';
+    pctEl.style.color = today.pct >= 0 ? 'var(--up)' : 'var(--down)';
+  }
+
+  const valEl = document.getElementById('strength-value');
+  if (valEl && today.estTradingValue != null) {
+    valEl.textContent = (today.estTradingValue / 1e12).toFixed(1) + '조원(추정)';
+  }
+
+  const bestDateEl = document.getElementById('best-day-date');
+  if (bestDateEl) bestDateEl.textContent = bestDay.date;
+  const bestPctEl = document.getElementById('best-day-pct');
+  if (bestPctEl) { bestPctEl.textContent = '+' + bestDay.pct.toFixed(2) + '%'; bestPctEl.style.color = 'var(--up)'; }
+  const bestVolEl = document.getElementById('best-day-volume');
+  if (bestVolEl) bestVolEl.textContent = '거래량 ' + (bestDay.volume / 1e6).toFixed(1) + 'M주';
+
+  const worstDateEl = document.getElementById('worst-day-date');
+  if (worstDateEl) worstDateEl.textContent = worstDay.date;
+  const worstPctEl = document.getElementById('worst-day-pct');
+  if (worstPctEl) { worstPctEl.textContent = worstDay.pct.toFixed(2) + '%'; worstPctEl.style.color = 'var(--down)'; }
+  const worstVolEl = document.getElementById('worst-day-volume');
+  if (worstVolEl) worstVolEl.textContent = '거래량 ' + (worstDay.volume / 1e6).toFixed(1) + 'M주';
+
+  renderIntradayChart(intraday);
+}
+
+async function fetchMarketStrength() {
+  try {
+    const res = await fetch('/api/market-strength');
+    if (!res.ok) throw new Error('시장강도 API 오류: ' + res.status);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error);
+    strengthData = json.data;
+    renderStrengthGauge();
+  } catch (e) {
+    console.warn('시장강도 데이터 로드 실패:', e.message);
+    const titleEl = document.getElementById('strength-title');
+    if (titleEl) titleEl.textContent = '데이터 로드 실패';
+  }
+}
+
+fetchMarketStrength();
+setInterval(fetchMarketStrength, 5 * 60 * 1000);
 
 // =============================================
 // KRX 공매도·신용거래 데이터 연동
