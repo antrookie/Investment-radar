@@ -1626,4 +1626,9 @@ const items = [...tickerData, ...tickerData].map(d => {
     <span class="ticker-sym">${d.sym}</span>
     <span class="ticker-val">${d.val}</span>
     <span class="ticker-chg ${d.up ? 'up' : 'down'}">${d.chg}</span>
-  </span><span class="ticker-se
+  </span><span class="ticker-sep">|</span>`;
+}).join('');
+ticker.innerHTML = items;
+</script>
+</body>
+</html>
