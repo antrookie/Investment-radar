@@ -19,13 +19,37 @@ const HEADERS = {
   'Accept': 'application/json',
 };
 
-async function fetchDailyChart(symbol, range = '3mo') {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=1d`;
-  const res = await fetch(url, { headers: HEADERS });
+// data.js와 동일한 방식으로 crumb+cookie를 먼저 확보한다.
+// 이게 없으면 야후 쪽에서 요청을 차단하는 경우가 있어(특히 서버리스/데이터센터 IP),
+// 실패해도 크래시하지 않고 빈 값으로 진행해서 crumb 없이도 한 번 더 시도한다.
+async function getYahooAuth() {
+  try {
+    const res = await fetch('https://query1.finance.yahoo.com/v1/test/getcrumb', {
+      headers: {
+        'User-Agent': HEADERS['User-Agent'],
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+      },
+    });
+    const crumb = await res.text();
+    const cookie = res.headers.get('set-cookie') ?? '';
+    return { crumb, cookie };
+  } catch (e) {
+    return { crumb: '', cookie: '' };
+  }
+}
+
+async function fetchDailyChart(symbol, range = '3mo', auth = { crumb: '', cookie: '' }) {
+  let url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=1d`;
+  if (auth.crumb) url += `&crumb=${encodeURIComponent(auth.crumb)}`;
+  const headers = { ...HEADERS };
+  if (auth.cookie) headers['Cookie'] = auth.cookie;
+
+  const res = await fetch(url, { headers });
   if (!res.ok) throw new Error(`daily chart ${symbol} ${res.status}`);
   const json = await res.json();
   const result = json?.chart?.result?.[0];
-  if (!result) throw new Error(`daily chart ${symbol} 빈 응답`);
+  if (!result) throw new Error(`daily chart ${symbol} 빈 응답: ${JSON.stringify(json).slice(0, 200)}`);
 
   const ts = result.timestamp ?? [];
   const q = result.indicators?.quote?.[0] ?? {};
@@ -41,9 +65,13 @@ async function fetchDailyChart(symbol, range = '3mo') {
     .filter((d) => d.close != null && d.volume != null);
 }
 
-async function fetchIntraday(symbol) {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=5m`;
-  const res = await fetch(url, { headers: HEADERS });
+async function fetchIntraday(symbol, auth = { crumb: '', cookie: '' }) {
+  let url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=5m`;
+  if (auth.crumb) url += `&crumb=${encodeURIComponent(auth.crumb)}`;
+  const headers = { ...HEADERS };
+  if (auth.cookie) headers['Cookie'] = auth.cookie;
+
+  const res = await fetch(url, { headers });
   if (!res.ok) throw new Error(`intraday ${symbol} ${res.status}`);
   const json = await res.json();
   const result = json?.chart?.result?.[0];
@@ -84,10 +112,10 @@ function computeRealizedVolatility(changes, n = 20) {
 }
 
 // 심볼 하나에 대해 강도 지표에 필요한 데이터 전부를 계산한다 (주식/코인 공용)
-async function computeMarketData(symbol, { intradaySymbol = symbol, chartRange = '3mo' } = {}) {
-  const days = await fetchDailyChart(symbol, chartRange);
+async function computeMarketData(symbol, auth, { intradaySymbol = symbol, chartRange = '3mo' } = {}) {
+  const days = await fetchDailyChart(symbol, chartRange, auth);
   const changes = computeDailyChanges(days);
-  if (changes.length < 21) throw new Error(`${symbol} 데이터 부족 (최소 21일 필요)`);
+  if (changes.length < 21) throw new Error(`${symbol} 데이터 부족 (최소 21일 필요, 받은 개수: ${changes.length})`);
 
   const today = changes[changes.length - 1];
   const last20 = changes.slice(-21, -1);
@@ -102,7 +130,7 @@ async function computeMarketData(symbol, { intradaySymbol = symbol, chartRange =
 
   let intraday = [];
   try {
-    intraday = await fetchIntraday(intradaySymbol);
+    intraday = await fetchIntraday(intradaySymbol, auth);
   } catch (e) {
     intraday = [];
   }
@@ -132,10 +160,12 @@ export default async function handler(req) {
   }
 
   try {
+    const auth = await getYahooAuth();
+
     // 코스피와 BTC를 병렬로 계산. 하나가 실패해도 다른 하나는 반환되도록 allSettled 사용.
     const [stockResult, cryptoResult] = await Promise.allSettled([
-      computeMarketData('^KS11'),
-      computeMarketData('BTC-USD', { chartRange: '3mo' }),
+      computeMarketData('^KS11', auth),
+      computeMarketData('BTC-USD', auth, { chartRange: '3mo' }),
     ]);
 
     const data = {
@@ -143,13 +173,16 @@ export default async function handler(req) {
       crypto: cryptoResult.status === 'fulfilled' ? cryptoResult.value : null,
     };
 
+    // 디버깅용: 실패한 쪽의 원인을 함께 반환해서 프론트에서 확인할 수 있게 한다.
+    const errors = {};
+    if (stockResult.status === 'rejected') errors.stock = stockResult.reason?.message;
+    if (cryptoResult.status === 'rejected') errors.crypto = cryptoResult.reason?.message;
+
     if (!data.stock && !data.crypto) {
-      throw new Error(
-        `stock: ${stockResult.reason?.message}, crypto: ${cryptoResult.reason?.message}`
-      );
+      throw new Error(`stock: ${errors.stock}, crypto: ${errors.crypto}`);
     }
 
-    return new Response(JSON.stringify({ ok: true, data, ts: Date.now() }), {
+    return new Response(JSON.stringify({ ok: true, data, errors, ts: Date.now() }), {
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
