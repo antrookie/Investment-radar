@@ -1426,20 +1426,20 @@ function renderIntradayChart(elId, statusId, intraday) {
 }
 
 // prefix: 'stock' 또는 'crypto'. volIndicator/baseline/volWeight/volLabel로 자산군별 차이 처리.
-// 주식(주 단위)용 기본 거래량 포맷: "0.4M" (백만 주)
-function formatVolumeShares(volume) {
-  return '거래량 ' + (volume / 1e6).toFixed(1) + 'M';
+// 원화(₩) 억 단위 포맷: 예) 22,500억 -> "₩22,500억"
+function formatWonEok(value) {
+  const eok = Math.round(value / 1e8);
+  return '거래대금 ₩' + eok.toLocaleString('ko-KR') + '억';
 }
 
-// 코인용 거래대금 포맷: 야후가 주는 코인 volume은 '주식 수'가 아니라 '달러 거래대금'이므로
-// 개수 단위(M주)가 아니라 금액(억 원 아님, 달러 기준 억 단위)으로 표시한다.
-// 예: 29,841,300,000(달러) -> "$298억"
+// 달러($) 억 단위 포맷: 코인은 야후가 주는 volume이 애초에 '달러 거래대금'이라
+// close를 곱하지 않고 volume 값 자체를 바로 사용한다.
 function formatVolumeUsdEok(volumeUsd) {
   const eok = Math.round(volumeUsd / 1e8);
   return '거래대금 $' + eok.toLocaleString('ko-KR') + '억';
 }
 
-function renderStrengthSection(prefix, marketData, volIndicator, baseline, volWeight, volDisplay, formatVolume = formatVolumeShares) {
+function renderStrengthSection(prefix, marketData, volIndicator, baseline, volWeight, volDisplay, formatVolume) {
   if (!marketData) {
     const titleEl = document.getElementById(`${prefix}-strength-title`);
     if (titleEl) titleEl.textContent = '데이터 로드 실패';
@@ -1476,14 +1476,14 @@ function renderStrengthSection(prefix, marketData, volIndicator, baseline, volWe
   const bestPctEl = document.getElementById(`${prefix}-best-day-pct`);
   if (bestPctEl) { bestPctEl.textContent = '+' + bestDay.pct.toFixed(2) + '%'; bestPctEl.style.color = 'var(--up)'; }
   const bestVolEl = document.getElementById(`${prefix}-best-day-volume`);
-  if (bestVolEl) bestVolEl.textContent = formatVolume(bestDay.volume);
+  if (bestVolEl) bestVolEl.textContent = formatVolume(bestDay);
 
   const worstDateEl = document.getElementById(`${prefix}-worst-day-date`);
   if (worstDateEl) worstDateEl.textContent = worstDay.date;
   const worstPctEl = document.getElementById(`${prefix}-worst-day-pct`);
   if (worstPctEl) { worstPctEl.textContent = worstDay.pct.toFixed(2) + '%'; worstPctEl.style.color = 'var(--down)'; }
   const worstVolEl = document.getElementById(`${prefix}-worst-day-volume`);
-  if (worstVolEl) worstVolEl.textContent = formatVolume(worstDay.volume);
+  if (worstVolEl) worstVolEl.textContent = formatVolume(worstDay);
 
   renderIntradayChart(`${prefix}-intraday-chart`, `${prefix}-intraday-status`, intraday);
 }
@@ -1491,21 +1491,22 @@ function renderStrengthSection(prefix, marketData, volIndicator, baseline, volWe
 function renderStrengthGauge() {
   if (!strengthData) return;
 
-  // 주식(KOSPI) — VIX 기준(baseline 20), 거래량은 주(株) 단위
+  // 주식(KOSPI) — VIX 기준(baseline 20). 거래대금은 종가×거래량으로 원화(억) 환산.
   renderStrengthSection('stock', strengthData.stock, latestVix, 20, 1, (today) => {
     const valEl = document.getElementById('stock-strength-value');
     if (valEl && today.estTradingValue != null) {
-      valEl.textContent = (today.estTradingValue / 1e12).toFixed(1) + '조원(추정)';
+      const eok = Math.round(today.estTradingValue / 1e8);
+      valEl.textContent = '₩' + eok.toLocaleString('ko-KR') + '억(추정)';
     }
-  }, formatVolumeShares);
+  }, (day) => formatWonEok(day.close * day.volume));
 
   // 코인(BTC) — 실현 변동성 기준(baseline 3.5%). VIX보다 스케일이 작아 가중치를 3배로.
-  // 거래량은 달러 거래대금 기준이므로 $억 단위로 표시
+  // 코인은 volume 자체가 이미 달러 거래대금이라 close를 곱하지 않는다.
   const cryptoVol = strengthData.crypto?.today?.realizedVol ?? null;
   renderStrengthSection('crypto', strengthData.crypto, cryptoVol, 3.5, 3, (today) => {
     const volEl = document.getElementById('crypto-strength-vol');
     if (volEl && today.realizedVol != null) volEl.textContent = today.realizedVol.toFixed(2) + '%';
-  }, formatVolumeUsdEok);
+  }, (day) => formatVolumeUsdEok(day.volume));
 }
 
 async function fetchMarketStrength() {
@@ -1625,9 +1626,4 @@ const items = [...tickerData, ...tickerData].map(d => {
     <span class="ticker-sym">${d.sym}</span>
     <span class="ticker-val">${d.val}</span>
     <span class="ticker-chg ${d.up ? 'up' : 'down'}">${d.chg}</span>
-  </span><span class="ticker-sep">|</span>`;
-}).join('');
-ticker.innerHTML = items;
-</script>
-</body>
-</html>
+  </span><span class="ticker-se
