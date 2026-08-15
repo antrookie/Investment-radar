@@ -1502,11 +1502,21 @@ async function fetchMarketStrength() {
     if (!json.ok) throw new Error(json.error);
     strengthData = json.data;
     renderStrengthGauge();
+
+    // 부분 실패(주식은 성공, 코인은 실패 등)의 원인을 화면에 표시
+    if (json.errors?.stock) {
+      const el = document.getElementById('stock-strength-title');
+      if (el) el.textContent = '데이터 로드 실패: ' + json.errors.stock;
+    }
+    if (json.errors?.crypto) {
+      const el = document.getElementById('crypto-strength-title');
+      if (el) el.textContent = '데이터 로드 실패: ' + json.errors.crypto;
+    }
   } catch (e) {
     console.warn('시장강도 데이터 로드 실패:', e.message);
     ['stock-strength-title', 'crypto-strength-title'].forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.textContent = '데이터 로드 실패';
+      if (el) el.textContent = '데이터 로드 실패: ' + e.message;
     });
   }
 }
