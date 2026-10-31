@@ -569,6 +569,24 @@
     gap: 1.2rem;
   }
 </style>
+<meta name="description" content="Fed 유동성(TGA·RRP·지급준비금), 미국·국내 증시, 환율, 국채금리를 한눈에 보는 금융시장 모니터">
+<meta property="og:title" content="유동성 레이더 — 금융시장 모니터">
+<meta property="og:description" content="Fed 순유동성, 증시, 환율, 국채금리 실시간 대시보드">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#080c10">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%A1%3C/text%3E%3C/svg%3E">
+<!-- Google Analytics: GA_ID에 측정 ID(G-XXXXXXXX)를 넣으면 활성화됩니다 -->
+<script>
+  const GA_ID = ''; // 예: 'G-AB12CD34EF'
+  if (GA_ID) {
+    const g = document.createElement('script');
+    g.async = true; g.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+    document.head.appendChild(g);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){ dataLayer.push(arguments); };
+    gtag('js', new Date()); gtag('config', GA_ID);
+  }
+</script>
 </head>
 <body>
 
@@ -753,29 +771,29 @@
           <path d="M 43 19 A 55 55 0 0 1 77 19" fill="none" stroke="rgba(255,170,0,0.5)" stroke-width="10" stroke-linecap="round"/>
           <path d="M 77 19 A 55 55 0 0 1 110 65" fill="none" stroke="rgba(0,229,160,0.5)" stroke-width="10" stroke-linecap="round"/>
           <!-- Needle -->
-          <line id="needle" x1="60" y1="65" x2="60" y2="18" stroke="#ffaa00" stroke-width="2.5" stroke-linecap="round" transform="rotate(-15 60 65)"/>
+          <line id="needle" x1="60" y1="65" x2="60" y2="18" stroke="#ffaa00" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90 60 65)"/>
           <circle cx="60" cy="65" r="4" fill="#ffaa00"/>
         </svg>
         <div class="gauge-text">
-          <div class="gauge-score">52</div>
+          <div class="gauge-score" id="liq-score">—</div>
           <div class="gauge-label">/ 100</div>
         </div>
       </div>
       <div class="gauge-info">
-        <div class="gauge-title">중립 — 관망 구간</div>
-        <div class="gauge-desc">Fed 대차대조표 축소 지속, TGA 잔고 회복세, RRP 잔고 감소로 시중 유동성 소폭 개선 중. 국내 신용 잔고 증가세는 유의 필요.</div>
+        <div class="gauge-title" id="liq-title">데이터 로딩 중...</div>
+        <div class="gauge-desc" id="liq-desc">순유동성(Fed 총자산 − TGA − RRP)의 4주 변화와 52주 내 위치를 합산한 지표입니다. 참고용이며 투자 권유가 아닙니다.</div>
         <div class="gauge-indicators">
           <div class="gi-item">
             <span class="gi-label">전주 대비</span>
-            <span class="gi-val" style="color:var(--up)">+3pt</span>
+            <span class="gi-val" id="liq-d1w">—</span>
           </div>
           <div class="gi-item">
             <span class="gi-label">전월 대비</span>
-            <span class="gi-val" style="color:var(--down)">-5pt</span>
+            <span class="gi-val" id="liq-d4w">—</span>
           </div>
           <div class="gi-item">
             <span class="gi-label">추세</span>
-            <span class="tag tag-warn">횡보</span>
+            <span class="tag tag-blue" id="liq-trend">—</span>
           </div>
         </div>
       </div>
@@ -789,42 +807,30 @@
       <div class="card up">
         <div class="card-tag">NYSE · INDEX</div>
         <div class="card-name">S&P 500</div>
-        <div class="card-value big" id="rt-sp500">5,667.20</div>
-        <div class="card-change up"><span class="arrow">▲</span> +78.35 (+1.40%)</div>
-        <div class="card-sub">52W H: 6,147 / L: 4,835</div>
-        <svg class="sparkline-wrap" viewBox="0 0 80 40" preserveAspectRatio="none">
-          <polyline points="0,32 10,28 20,30 30,22 40,18 50,24 60,16 70,12 80,10" fill="none" stroke="rgba(0,229,160,0.6)" stroke-width="1.5"/>
-        </svg>
+        <div class="card-value big" id="rt-sp500">—</div>
+        <div class="card-change neutral">—</div>
+        <div class="card-sub" id="rt-sp500-52w">52W —</div>
       </div>
       <div class="card up">
         <div class="card-tag">NASDAQ · INDEX</div>
         <div class="card-name">나스닥 종합</div>
-        <div class="card-value big" id="rt-nasdaq">17,754.82</div>
-        <div class="card-change up"><span class="arrow">▲</span> +245.12 (+1.40%)</div>
-        <div class="card-sub">52W H: 20,109 / L: 15,708</div>
-        <svg class="sparkline-wrap" viewBox="0 0 80 40" preserveAspectRatio="none">
-          <polyline points="0,35 10,30 20,28 30,20 40,22 50,18 60,14 70,10 80,8" fill="none" stroke="rgba(0,229,160,0.6)" stroke-width="1.5"/>
-        </svg>
+        <div class="card-value big" id="rt-nasdaq">—</div>
+        <div class="card-change neutral">—</div>
+        <div class="card-sub" id="rt-nasdaq-52w">52W —</div>
       </div>
       <div class="card down">
         <div class="card-tag">NYSE · INDEX</div>
         <div class="card-name">다우 존스 산업평균</div>
-        <div class="card-value big" id="rt-dow">41,480.40</div>
-        <div class="card-change down"><span class="arrow">▼</span> -112.22 (-0.27%)</div>
-        <div class="card-sub">52W H: 45,073 / L: 36,611</div>
-        <svg class="sparkline-wrap" viewBox="0 0 80 40" preserveAspectRatio="none">
-          <polyline points="0,10 10,14 20,12 30,18 40,16 50,22 60,20 70,28 80,32" fill="none" stroke="rgba(255,68,102,0.6)" stroke-width="1.5"/>
-        </svg>
+        <div class="card-value big" id="rt-dow">—</div>
+        <div class="card-change neutral">—</div>
+        <div class="card-sub" id="rt-dow-52w">52W —</div>
       </div>
       <div class="card up">
         <div class="card-tag">CBOE · VOLATILITY</div>
         <div class="card-name">VIX 변동성 지수</div>
-        <div class="card-value big" id="rt-vix">23.45</div>
-        <div class="card-change down"><span class="arrow">▼</span> -1.82 (-7.20%)</div>
+        <div class="card-value big" id="rt-vix">—</div>
+        <div class="card-change neutral">—</div>
         <div class="card-sub">공포 구간: 20 이상</div>
-        <svg class="sparkline-wrap" viewBox="0 0 80 40" preserveAspectRatio="none">
-          <polyline points="0,15 10,10 20,18 30,8 40,14 50,6 60,12 70,20 80,22" fill="none" stroke="rgba(255,170,0,0.6)" stroke-width="1.5"/>
-        </svg>
       </div>
     </div>
   </div>
@@ -836,26 +842,26 @@
       <div class="card down">
         <div class="card-tag">KRX · INDEX</div>
         <div class="card-name">KOSPI</div>
-        <div class="card-value big" id="rt-kospi">2,559.79</div>
-        <div class="card-change down"><span class="arrow">▼</span> -18.44 (-0.71%)</div>
-        <div class="card-sub">거래대금: 8.2조 원</div>
+        <div class="card-value big" id="rt-kospi">—</div>
+        <div class="card-change neutral">—</div>
+        <div class="card-sub" id="rt-kospi-52w">52W —</div>
       </div>
       <div class="card down">
         <div class="card-tag">KRX · INDEX</div>
         <div class="card-name">KOSDAQ</div>
-        <div class="card-value big" id="rt-kosdaq">724.38</div>
-        <div class="card-change down"><span class="arrow">▼</span> -6.12 (-0.84%)</div>
-        <div class="card-sub">거래대금: 4.1조 원</div>
+        <div class="card-value big" id="rt-kosdaq">—</div>
+        <div class="card-change neutral">—</div>
+        <div class="card-sub" id="rt-kosdaq-52w">52W —</div>
       </div>
       <div class="card neutral">
-        <div class="card-tag">KRX · FUTURES</div>
+        <div class="card-tag">KRX · FUTURES <span style="color:var(--warn)">· 샘플</span></div>
         <div class="card-name">코스피 200 선물</div>
         <div class="card-value big">338.80</div>
         <div class="card-change down"><span class="arrow">▼</span> -2.45 (-0.72%)</div>
         <div class="card-sub">미결제약정: 186,422계약</div>
       </div>
       <div class="card neutral">
-        <div class="card-tag">FEAR & GREED</div>
+        <div class="card-tag">FEAR & GREED <span style="color:var(--warn)">· 샘플</span></div>
         <div class="card-name">국내 투자심리</div>
         <div class="card-value big">38</div>
         <div class="card-change neutral"><span style="color:var(--warn)">■</span> 공포 구간</div>
@@ -871,32 +877,32 @@
       <div class="card up">
         <div class="card-tag">USD/KRW</div>
         <div class="card-name">달러-원</div>
-        <div class="card-value" id="rt-usdkrw">1,461.50</div>
-        <div class="card-change up"><span class="arrow">▲</span> +4.50 (+0.31%)</div>
+        <div class="card-value" id="rt-usdkrw">—</div>
+        <div class="card-change neutral">—</div>
       </div>
       <div class="card down">
         <div class="card-tag">EUR/KRW</div>
         <div class="card-name">유로-원</div>
-        <div class="card-value" id="rt-eurkrw">1,588.30</div>
-        <div class="card-change up"><span class="arrow">▲</span> +7.20 (+0.46%)</div>
+        <div class="card-value" id="rt-eurkrw">—</div>
+        <div class="card-change neutral">—</div>
       </div>
       <div class="card down">
         <div class="card-tag">JPY/KRW (100¥)</div>
         <div class="card-name">엔-원 (100엔)</div>
-        <div class="card-value" id="rt-jpykrw">978.45</div>
-        <div class="card-change down"><span class="arrow">▼</span> -2.15 (-0.22%)</div>
+        <div class="card-value" id="rt-jpykrw">—</div>
+        <div class="card-change neutral">—</div>
       </div>
       <div class="card neutral">
         <div class="card-tag">DXY · INDEX</div>
         <div class="card-name">달러 인덱스</div>
-        <div class="card-value" id="rt-dxy">103.82</div>
-        <div class="card-change down"><span class="arrow">▼</span> -0.22 (-0.21%)</div>
+        <div class="card-value" id="rt-dxy">—</div>
+        <div class="card-change neutral">—</div>
       </div>
       <div class="card up">
         <div class="card-tag">USD/CNY</div>
         <div class="card-name">달러-위안</div>
-        <div class="card-value" id="rt-cny">7.2450</div>
-        <div class="card-change up"><span class="arrow">▲</span> +0.0080</div>
+        <div class="card-value" id="rt-cny">—</div>
+        <div class="card-change neutral">—</div>
       </div>
     </div>
   </div>
@@ -906,7 +912,7 @@
     <div class="section-label"><span>국채 금리</span></div>
     <div class="three-col">
       <div class="card-wide">
-        <div class="card-tag" style="margin-bottom:0.8rem">미국 국채 수익률 곡선 · US TREASURY YIELD CURVE</div>
+        <div class="card-tag" style="margin-bottom:0.8rem">미국 국채 수익률 곡선 · US TREASURY YIELD CURVE <span id="us-rate-date" style="opacity:.6"></span></div>
         <table class="data-table">
           <thead><tr>
             <th>만기</th>
@@ -915,16 +921,16 @@
             <th>추세</th>
           </tr></thead>
           <tbody>
-            <tr><td class="td-name">2년물</td><td class="td-val" id="rt-us2y">4.025</td><td class="td-chg down">▼ -0.028</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:80%;background:var(--down)"></div></div></td></tr>
-            <tr><td class="td-name">5년물</td><td class="td-val" id="rt-us5y">4.102</td><td class="td-chg down">▼ -0.015</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:82%;background:var(--down)"></div></div></td></tr>
-            <tr><td class="td-name">10년물</td><td class="td-val" id="rt-us10y">4.258</td><td class="td-chg up">▲ +0.012</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:85%;background:var(--up)"></div></div></td></tr>
-            <tr><td class="td-name">30년물</td><td class="td-val" id="rt-us30y">4.612</td><td class="td-chg up">▲ +0.018</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:92%;background:var(--up)"></div></div></td></tr>
-            <tr><td class="td-name">10Y-2Y 스프레드</td><td class="td-val">+0.233</td><td class="td-chg up" style="color:var(--up)">▲ 정상화</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:40%;background:var(--blue)"></div></div></td></tr>
+            <tr><td class="td-name">2년물</td><td class="td-val" id="rt-us2y">—</td><td class="td-chg">—</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:0%;background:var(--blue)"></div></div></td></tr>
+            <tr><td class="td-name">5년물</td><td class="td-val" id="rt-us5y">—</td><td class="td-chg">—</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:0%;background:var(--blue)"></div></div></td></tr>
+            <tr><td class="td-name">10년물</td><td class="td-val" id="rt-us10y">—</td><td class="td-chg">—</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:0%;background:var(--blue)"></div></div></td></tr>
+            <tr><td class="td-name">30년물</td><td class="td-val" id="rt-us30y">—</td><td class="td-chg">—</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:0%;background:var(--blue)"></div></div></td></tr>
+            <tr><td class="td-name">10Y-2Y 스프레드</td><td class="td-val" id="rt-us-spread">—</td><td class="td-chg" id="rt-us-spread-chg">—</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:40%;background:var(--blue)"></div></div></td></tr>
           </tbody>
         </table>
       </div>
       <div class="card-wide">
-        <div class="card-tag" style="margin-bottom:0.8rem">한국 국채 수익률 · KTB YIELD</div>
+        <div class="card-tag" style="margin-bottom:0.8rem">한국 국채 수익률 · KTB YIELD <span id="ktb-date" style="opacity:.6"></span></div>
         <table class="data-table">
           <thead><tr>
             <th>만기</th>
@@ -933,11 +939,11 @@
             <th>추세</th>
           </tr></thead>
           <tbody>
-            <tr><td class="td-name">1년물</td><td class="td-val">2.848</td><td class="td-chg down">▼ -0.012</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:57%;background:var(--down)"></div></div></td></tr>
-            <tr><td class="td-name">3년물</td><td class="td-val">2.912</td><td class="td-chg up">▲ +0.005</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:58%;background:var(--up)"></div></div></td></tr>
-            <tr><td class="td-name">5년물</td><td class="td-val">3.025</td><td class="td-chg up">▲ +0.008</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:60%;background:var(--up)"></div></div></td></tr>
-            <tr><td class="td-name">10년물</td><td class="td-val">3.145</td><td class="td-chg up">▲ +0.012</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:63%;background:var(--up)"></div></div></td></tr>
-            <tr><td class="td-name">기준금리 (한은)</td><td class="td-val">2.75</td><td class="td-chg neutral" style="color:var(--blue)">— 동결</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:55%;background:var(--blue)"></div></div></td></tr>
+            <tr><td class="td-name">1년물</td><td class="td-val" id="ktb-1y">—</td><td class="td-chg">—</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:0%;background:var(--blue)"></div></div></td></tr>
+            <tr><td class="td-name">3년물</td><td class="td-val" id="ktb-3y">—</td><td class="td-chg">—</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:0%;background:var(--blue)"></div></div></td></tr>
+            <tr><td class="td-name">5년물</td><td class="td-val" id="ktb-5y">—</td><td class="td-chg">—</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:0%;background:var(--blue)"></div></div></td></tr>
+            <tr><td class="td-name">10년물</td><td class="td-val" id="ktb-10y">—</td><td class="td-chg">—</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:0%;background:var(--blue)"></div></div></td></tr>
+            <tr><td class="td-name">기준금리 (한은)</td><td class="td-val" id="kr-base">—</td><td class="td-chg" style="color:var(--blue)">—</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:0%;background:var(--blue)"></div></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -946,15 +952,15 @@
         <table class="data-table">
           <thead><tr>
             <th>지표</th>
-            <th style="text-align:right">bp</th>
-            <th style="text-align:right">전주비</th>
+            <th style="text-align:right">수준</th>
+            <th style="text-align:right">전일비</th>
           </tr></thead>
           <tbody>
-            <tr><td class="td-name">US HY 스프레드</td><td class="td-val">312bp</td><td class="td-chg up">▲ +8bp</td></tr>
-            <tr><td class="td-name">US IG 스프레드</td><td class="td-val">98bp</td><td class="td-chg up">▲ +3bp</td></tr>
-            <tr><td class="td-name">국내 AA- 회사채</td><td class="td-val">3.88%</td><td class="td-chg up">▲ +0.05</td></tr>
-            <tr><td class="td-name">국내 BBB- 회사채</td><td class="td-val">8.12%</td><td class="td-chg up">▲ +0.18</td></tr>
-            <tr><td class="td-name">LIBOR-OIS 스프레드</td><td class="td-val">14bp</td><td class="td-chg neutral" style="color:var(--blue)">— 정상</td></tr>
+            <tr><td class="td-name">US HY 스프레드 (OAS)</td><td class="td-val" id="us-hy">—</td><td class="td-chg">—</td></tr>
+            <tr><td class="td-name">US IG 스프레드 (OAS)</td><td class="td-val" id="us-ig">—</td><td class="td-chg">—</td></tr>
+            <tr><td class="td-name">국내 AA- 회사채 (3Y)</td><td class="td-val" id="kr-corp-aa">—</td><td class="td-chg">—</td></tr>
+            <tr><td class="td-name">국내 BBB- 회사채 (3Y)</td><td class="td-val" id="kr-corp-bbb">—</td><td class="td-chg">—</td></tr>
+            <tr><td class="td-name">AA- 스프레드 (vs 국고채3Y)</td><td class="td-val" id="kr-aa-spread">—</td><td class="td-chg">—</td></tr>
           </tbody>
         </table>
       </div>
@@ -969,15 +975,15 @@
       <div class="card neutral">
         <div class="card-tag">US TREASURY · TGA</div>
         <div class="card-name">재무부 일반계정 잔고<br><span style="font-size:0.65rem;color:var(--text-dim)">Treasury General Account</span></div>
-        <div class="card-value" id="fred-tga">$7,456억</div>
-        <div class="card-change up" id="fred-tga-chg"><span class="arrow">▲</span> +$840억 (주간)</div>
+        <div class="card-value" id="fred-tga">—</div>
+        <div class="card-change neutral" id="fred-tga-chg">—</div>
         <div class="card-sub" id="fred-tga-date">잔고 증가 → 시중 유동성 ↓</div>
         <div style="margin-top:0.8rem">
           <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--text-dim);margin-bottom:0.3rem;font-family:'JetBrains Mono',monospace">
-            <span>$0</span><span>현재 $7,456억</span><span>$1.5조</span>
+            <span>$0</span><span id="fred-tga-mid">현재 —</span><span>$1.5조</span>
           </div>
           <div class="balance-bar-bg" style="height:8px;flex:none">
-            <div class="balance-bar-fill" style="width:50%;background:linear-gradient(90deg,var(--blue),var(--cyan))"></div>
+            <div class="balance-bar-fill" id="fred-tga-bar" style="width:0%;background:linear-gradient(90deg,var(--blue),var(--cyan))"></div>
           </div>
         </div>
       </div>
@@ -986,18 +992,18 @@
       <div class="card up">
         <div class="card-tag">FED · RRP</div>
         <div class="card-name">역레포 잔고<br><span style="font-size:0.65rem;color:var(--text-dim)">Reverse Repo Program</span></div>
-        <div class="card-value" id="fred-rrp">$1,234억</div>
-        <div class="card-change down" id="fred-rrp-chg"><span class="arrow">▼</span> -$320억 (주간)</div>
+        <div class="card-value" id="fred-rrp">—</div>
+        <div class="card-change neutral" id="fred-rrp-chg">—</div>
         <div class="card-sub" id="fred-rrp-date">잔고 감소 → 시중 유동성 ↑</div>
         <div style="margin-top:0.8rem">
           <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--text-dim);margin-bottom:0.3rem;font-family:'JetBrains Mono',monospace">
-            <span>$0</span><span>현재 $1,234억</span><span>$2.5조</span>
+            <span>$0</span><span id="fred-rrp-mid">현재 —</span><span>$2.5조</span>
           </div>
           <div class="balance-bar-bg" style="height:8px;flex:none">
-            <div class="balance-bar-fill" style="width:5%;background:linear-gradient(90deg,var(--up),#00cc88)"></div>
+            <div class="balance-bar-fill" id="fred-rrp-bar" style="width:0%;background:linear-gradient(90deg,var(--up),#00cc88)"></div>
           </div>
         </div>
-        <div style="margin-top:0.5rem"><span class="tag tag-up">역대 저점 근접</span></div>
+        <div style="margin-top:0.5rem"><span class="tag tag-blue" id="fred-rrp-tag">—</span></div>
       </div>
 
       <!-- Fed Balance Sheet -->
@@ -1005,29 +1011,27 @@
         <div class="card-tag">FED · BALANCE SHEET</div>
         <div class="card-name" style="margin-bottom:0.4rem">연방준비제도 대차대조표 · Federal Reserve Balance Sheet</div>
         <div style="display:flex;align-items:baseline;gap:1rem;margin-bottom:0.8rem">
-          <div class="card-value" id="fred-balance">$6.762조</div>
-          <div class="card-change down" id="fred-balance-chg"><span class="arrow">▼</span> -$420억 (주간) · QT 진행 중</div>
+          <div class="card-value" id="fred-balance">—</div>
+          <div class="card-change neutral" id="fred-balance-chg">—</div>
         </div>
         <div class="balance-bar-wrap">
           <div class="balance-row">
             <span class="balance-label">국채 (Treasury)</span>
-            <div class="balance-bar-bg"><div class="balance-bar-fill" style="width:72%;background:linear-gradient(90deg,var(--blue),var(--cyan))"></div></div>
-            <span class="balance-val">$4.872조</span>
+            <div class="balance-bar-bg"><div class="balance-bar-fill" id="fed-treasury-bar" style="width:0%;background:linear-gradient(90deg,var(--blue),var(--cyan))"></div></div>
+            <span class="balance-val" id="fed-treasury-val">—</span>
           </div>
           <div class="balance-row">
             <span class="balance-label">MBS</span>
-            <div class="balance-bar-bg"><div class="balance-bar-fill" style="width:26%;background:linear-gradient(90deg,var(--purple),#8844ff)"></div></div>
-            <span class="balance-val">$2.329조 (잔여)</span>
+            <div class="balance-bar-bg"><div class="balance-bar-fill" id="fed-mbs-bar" style="width:0%;background:linear-gradient(90deg,var(--purple),#8844ff)"></div></div>
+            <span class="balance-val" id="fed-mbs-val">—</span>
           </div>
           <div class="balance-row">
             <span class="balance-label">기타 자산</span>
-            <div class="balance-bar-bg"><div class="balance-bar-fill" style="width:2%;background:var(--text-dim)"></div></div>
-            <span class="balance-val">$0.154조</span>
+            <div class="balance-bar-bg"><div class="balance-bar-fill" id="fed-other-bar" style="width:0%;background:var(--text-dim)"></div></div>
+            <span class="balance-val" id="fed-other-val">—</span>
           </div>
         </div>
-        <div style="margin-top:0.8rem;font-size:0.68rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace">
-          고점(2022.04): $8.97조 → 현재: $6.76조 | 축소 규모: $2.21조 (-24.6%)
-        </div>
+        <div style="margin-top:0.8rem;font-size:0.68rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace" id="fed-peak-text">—</div>
       </div>
     </div>
 
@@ -1040,30 +1044,30 @@
             <div class="card-name" style="margin:0.4rem 0 0">미국 지급준비금 · Bank Reserve Balances at Fed</div>
           </div>
           <div style="text-align:right">
-            <div class="card-value" id="fred-reserves">$3.248조</div>
-            <div class="card-change up" id="fred-reserves-chg"><span class="arrow">▲</span> +$180억 (주간)</div>
+            <div class="card-value" id="fred-reserves">—</div>
+            <div class="card-change neutral" id="fred-reserves-chg">—</div>
           </div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem">
           <div style="background:rgba(0,170,255,0.05);border:1px solid rgba(0,170,255,0.15);border-radius:6px;padding:0.8rem">
             <div style="font-size:0.62rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem">SOFR</div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--text-bright);font-weight:600">4.30%</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--text-bright);font-weight:600" id="rate-sofr">—</div>
             <div style="font-size:0.65rem;color:var(--text-dim);margin-top:0.2rem">담보부 익일물</div>
           </div>
           <div style="background:rgba(0,170,255,0.05);border:1px solid rgba(0,170,255,0.15);border-radius:6px;padding:0.8rem">
             <div style="font-size:0.62rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem">EFFR</div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--text-bright);font-weight:600">4.33%</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--text-bright);font-weight:600" id="rate-effr">—</div>
             <div style="font-size:0.65rem;color:var(--text-dim);margin-top:0.2rem">실효연방기금금리</div>
           </div>
           <div style="background:rgba(0,170,255,0.05);border:1px solid rgba(0,170,255,0.15);border-radius:6px;padding:0.8rem">
             <div style="font-size:0.62rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem">IORB</div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--text-bright);font-weight:600">4.40%</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--text-bright);font-weight:600" id="rate-iorb">—</div>
             <div style="font-size:0.65rem;color:var(--text-dim);margin-top:0.2rem">지준 이자율</div>
           </div>
           <div style="background:rgba(170,102,255,0.05);border:1px solid rgba(170,102,255,0.15);border-radius:6px;padding:0.8rem">
-            <div style="font-size:0.62rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem">준비금 적정성</div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--warn);font-weight:600">충분</div>
-            <div style="font-size:0.65rem;color:var(--text-dim);margin-top:0.2rem">LCLoR 추정: $3.0조</div>
+            <div style="font-size:0.62rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem">순유동성 (Fed−TGA−RRP)</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--warn);font-weight:600" id="netliq-val">—</div>
+            <div style="font-size:0.65rem;color:var(--text-dim);margin-top:0.2rem" id="netliq-sub">4주 전 대비 —</div>
           </div>
         </div>
       </div>
@@ -1081,7 +1085,7 @@
             <div class="card-tag">KRX · SHORT SELLING</div>
             <div class="card-name" style="margin:0.4rem 0 0">공매도 잔고 현황</div>
           </div>
-          <span class="tag tag-warn">부분 허용 중</span>
+          <span class="tag tag-warn">샘플 데이터</span>
         </div>
         <table class="data-table">
           <thead><tr>
@@ -1098,7 +1102,7 @@
           </tbody>
         </table>
         <div style="margin-top:1rem;font-size:0.68rem;color:var(--text-dim);border-top:1px solid var(--border);padding-top:0.8rem;font-family:'JetBrains Mono',monospace;line-height:1.8">
-          공매도 잔고 상위: 삼성전자 / SK하이닉스 / 카카오 / NAVER / 셀트리온
+          ⚠️ 예시 수치입니다 — 공매도 잔고는 한국은행 ECOS에 없어 별도 소스(KRX) 연동이 필요합니다
         </div>
       </div>
 
@@ -1106,32 +1110,32 @@
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
           <div>
-            <div class="card-tag">KRX · MARGIN TRADING</div>
-            <div class="card-name" style="margin:0.4rem 0 0">신용거래 현황</div>
+            <div class="card-tag">ECOS · 증시주변자금 (월간)</div>
+            <div class="card-name" style="margin:0.4rem 0 0">신용거래 · 증시자금 현황</div>
           </div>
-          <span class="tag tag-down">주의 수준</span>
+          <span class="tag tag-blue" id="credit-tag">로딩 중</span>
         </div>
         <table class="data-table">
           <thead><tr>
             <th>구분</th>
             <th style="text-align:right">잔고 (억원)</th>
-            <th style="text-align:right">전주비</th>
+            <th style="text-align:right">전월비</th>
           </tr></thead>
           <tbody>
-            <tr><td class="td-name">신용융자 잔고 (KOSPI)</td><td class="td-val" id="krx-credit-kospi" style="color:var(--down)">98,240</td><td class="td-chg up">▲ +2,880</td></tr>
-            <tr><td class="td-name">신용융자 잔고 (KOSDAQ)</td><td class="td-val" id="krx-credit-kosdaq" style="color:var(--down)">64,150</td><td class="td-chg up">▲ +1,640</td></tr>
-            <tr><td class="td-name">신용융자 합계</td><td class="td-val" id="krx-credit-total" style="color:var(--down)">162,390</td><td class="td-chg up">▲ +4,520</td></tr>
-            <tr><td class="td-name">반대매매 규모 (일)</td><td class="td-val" style="color:var(--warn)">420</td><td class="td-chg down">▼ -80</td></tr>
+            <tr><td class="td-name">신용융자 잔고 (전체)</td><td class="td-val" id="krx-credit-total" style="color:var(--down)">—</td><td class="td-chg" id="krx-credit-total-chg">—</td></tr>
+            <tr><td class="td-name">투자자 예탁금</td><td class="td-val" id="mf-deposit">—</td><td class="td-chg" id="mf-deposit-chg">—</td></tr>
+            <tr><td class="td-name">위탁매매 미수금</td><td class="td-val" id="mf-unsettled" style="color:var(--warn)">—</td><td class="td-chg" id="mf-unsettled-chg">—</td></tr>
           </tbody>
         </table>
         <div style="margin-top:0.8rem">
-          <div style="font-size:0.65rem;color:var(--text-dim);margin-bottom:0.3rem;font-family:'JetBrains Mono',monospace">신용잔고 / 시가총액 비율 (KOSPI)</div>
+          <div style="font-size:0.65rem;color:var(--text-dim);margin-bottom:0.3rem;font-family:'JetBrains Mono',monospace">신용융자 / 투자자예탁금 비율 (레버리지 지표)</div>
           <div class="balance-bar-bg" style="height:8px;flex:none">
-            <div class="balance-bar-fill" style="width:68%;background:linear-gradient(90deg,var(--warn),var(--down))"></div>
+            <div id="credit-ratio-bar" style="height:100%;border-radius:4px;width:0%;background:linear-gradient(90deg,var(--warn),var(--down));transition:width .6s"></div>
           </div>
           <div style="display:flex;justify-content:space-between;font-size:0.62rem;color:var(--text-dim);margin-top:0.3rem;font-family:'JetBrains Mono',monospace">
-            <span>0%</span><span style="color:var(--warn)">현재 1.24% (주의)</span><span>2%</span>
+            <span>0%</span><span id="credit-ratio-text" style="color:var(--warn)">—</span><span>60%</span>
           </div>
+          <div id="credit-date" style="font-size:0.6rem;color:var(--text-dim);margin-top:0.4rem;font-family:'JetBrains Mono',monospace"></div>
         </div>
       </div>
     </div>
@@ -1144,34 +1148,35 @@
       <div class="card up">
         <div class="card-tag">COMEX · GOLD</div>
         <div class="card-name">금 (Gold)</div>
-        <div class="card-value" id="rt-gold">$3,021.40</div>
-        <div class="card-change up"><span class="arrow">▲</span> +18.60 (+0.62%)</div>
+        <div class="card-value" id="rt-gold">—</div>
+        <div class="card-change neutral">—</div>
       </div>
       <div class="card down">
         <div class="card-tag">NYMEX · WTI</div>
         <div class="card-name">WTI 원유</div>
-        <div class="card-value" id="rt-wti">$67.84</div>
-        <div class="card-change down"><span class="arrow">▼</span> -1.22 (-1.77%)</div>
+        <div class="card-value" id="rt-wti">—</div>
+        <div class="card-change neutral">—</div>
       </div>
       <div class="card up">
         <div class="card-tag">CRYPTO · BTC</div>
         <div class="card-name">비트코인 (BTC/USD)</div>
-        <div class="card-value" id="rt-btc">$84,250</div>
-        <div class="card-change up"><span class="arrow">▲</span> +1,840 (+2.23%)</div>
+        <div class="card-value" id="rt-btc">—</div>
+        <div class="card-change neutral">—</div>
       </div>
       <div class="card neutral">
         <div class="card-tag">CRYPTO · ETH</div>
         <div class="card-name">이더리움 (ETH/USD)</div>
-        <div class="card-value" id="rt-eth">$1,920</div>
-        <div class="card-change down"><span class="arrow">▼</span> -42 (-2.14%)</div>
+        <div class="card-value" id="rt-eth">—</div>
+        <div class="card-change neutral">—</div>
       </div>
     </div>
   </div>
 
   <div class="disclaimer">
     📡 증시·환율·금리·원자재·가상자산: Yahoo Finance (5분 지연) · 자동 갱신 5분 주기<br>
-    📊 Fed 대차대조표·지급준비금·RRP·TGA: FRED API (St. Louis Fed) · 주간 업데이트 · 자동 갱신 1시간 주기<br>
-    공매도·신용거래: 샘플 데이터 (추후 KRX OpenAPI 연동 예정) · 본 사이트는 정보 제공 목적이며 투자 권유가 아닙니다.
+    📊 Fed 대차대조표·지급준비금·RRP·TGA·정책금리·미 국채 2년·크레딧 스프레드: FRED (St. Louis Fed) · 자동 갱신 1시간 주기<br>
+    🏦 국고채·기준금리·회사채·신용융자·예탁금: 한국은행 ECOS (증시자금은 월간 통계)<br>
+    '샘플' 표시 항목(코스피200 선물, 국내 투자심리, 공매도)은 예시 수치이며 실데이터가 아닙니다 · 본 사이트는 정보 제공 목적이며 투자 권유가 아닙니다.
   </div>
 
 </div>
@@ -1184,18 +1189,18 @@ const SYM = {
   '^GSPC':    { id: 'rt-sp500',   fmt: 'price' },
   '^IXIC':    { id: 'rt-nasdaq',  fmt: 'price' },
   '^DJI':     { id: 'rt-dow',     fmt: 'price' },
-  '^VIX':     { id: 'rt-vix',     fmt: 'price2' },
+  '^VIX':     { id: 'rt-vix',     fmt: 'price2', invert: true },   // VIX 상승 = 악재 → 빨강
   '^KS11':    { id: 'rt-kospi',   fmt: 'price2' },
   '^KQ11':    { id: 'rt-kosdaq',  fmt: 'price2' },
   'KRW=X':    { id: 'rt-usdkrw', fmt: 'price2' },
   'EURKRW=X': { id: 'rt-eurkrw', fmt: 'price2' },
-  'JPYKRW=X': { id: 'rt-jpykrw', fmt: 'price2' },
+  'JPYKRW=X': { id: 'rt-jpykrw', fmt: 'price2', mult: 100 },       // Yahoo는 1엔당 원 → 100엔 기준으로 환산
   'DX-Y.NYB': { id: 'rt-dxy',    fmt: 'price2' },
   'CNY=X':    { id: 'rt-cny',     fmt: 'price4' },
-  '^TNX':     { id: 'rt-us10y',   fmt: 'price3' },
-  '^FVX':     { id: 'rt-us5y',    fmt: 'price3' },
-  '^IRX':     { id: 'rt-us2y',    fmt: 'price3' },
-  '^TYX':     { id: 'rt-us30y',   fmt: 'price3' },
+  // 미 국채: 2년물은 FRED(DGS2)에서 채움 — Yahoo ^IRX는 13주 T-Bill이라 2년물이 아님
+  '^TNX':     { id: 'rt-us10y',   fmt: 'price3', yieldRow: true },
+  '^FVX':     { id: 'rt-us5y',    fmt: 'price3', yieldRow: true },
+  '^TYX':     { id: 'rt-us30y',   fmt: 'price3', yieldRow: true },
   'GC=F':     { id: 'rt-gold',    fmt: 'price2' },
   'CL=F':     { id: 'rt-wti',     fmt: 'price2' },
   'BTC-USD':  { id: 'rt-btc',     fmt: 'price0' },
@@ -1212,36 +1217,91 @@ function fmtPrice(v, fmt) {
   return v.toFixed(2);
 }
 
-function fmtChg(change, pct) {
+const FMT_DIGITS = { price0: 0, price3: 3, price4: 4 };
+
+function fmtChg(change, pct, digits = 2) {
   if (change == null) return '';
   const sign = change >= 0 ? '+' : '';
   const arrow = change >= 0 ? '▲' : '▼';
-  return `${arrow} ${sign}${change.toFixed(2)} (${sign}${pct.toFixed(2)}%)`;
+  const pctTxt = pct != null ? ` (${sign}${pct.toFixed(2)}%)` : '';
+  return `${arrow} ${sign}${change.toFixed(digits)}${pctTxt}`;
+}
+
+// 금리 표 행(값 셀 + 바로 옆 전일비 셀 + 막대) 공통 갱신. d = {value, prev}
+function setRateRow(id, d, suffix = '', withBar = true) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (d?.value == null) { el.textContent = '—'; return; }
+  el.textContent = d.value.toFixed(3) + suffix;
+  const chg = el.nextElementSibling;
+  const diff = d.prev != null ? d.value - d.prev : null;
+  if (chg && chg.classList.contains('td-chg')) {
+    if (diff == null) { chg.textContent = '—'; chg.className = 'td-chg'; }
+    else {
+      chg.textContent = `${diff > 0 ? '▲ +' : diff < 0 ? '▼ ' : '— '}${diff.toFixed(3)}`;
+      chg.className = 'td-chg ' + (diff > 0 ? 'up' : diff < 0 ? 'down' : 'neutral');
+    }
+  }
+  const bar = withBar ? el.closest('tr')?.querySelector('.inline-bar-fill') : null;
+  if (bar) {
+    bar.style.width = Math.max(2, Math.min(100, d.value / 6 * 100)) + '%';   // 0~6% 스케일
+    bar.style.background = diff != null && diff < 0 ? 'var(--down)' : 'var(--up)';
+  }
+}
+
+// bp 행 (스프레드). 확대 = 위험 증가 = 빨강
+function setBpRow(id, d) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (d?.value == null) { el.textContent = '—'; return; }
+  el.textContent = d.value + 'bp';
+  const chg = el.nextElementSibling;
+  if (chg && chg.classList.contains('td-chg')) {
+    const diff = d.prev != null ? d.value - d.prev : null;
+    if (diff == null) { chg.textContent = '—'; chg.className = 'td-chg'; }
+    else {
+      chg.textContent = `${diff > 0 ? '▲ +' : diff < 0 ? '▼ ' : '— '}${diff}bp`;
+      chg.className = 'td-chg ' + (diff > 0 ? 'down' : diff < 0 ? 'up' : 'neutral');
+    }
+  }
 }
 
 function updateCard(sym, d) {
   const cfg = SYM[sym];
-  if (!cfg) return;
+  if (!cfg || d.price == null) return;
   const el = document.getElementById(cfg.id);
   if (!el) return;
 
-  const isUp = d.change >= 0;
-  const card = el.closest('.card');
+  const m = cfg.mult ?? 1;
+  const price  = d.price * m;
+  const change = d.change != null ? d.change * m : null;
+  const isUp   = (change ?? 0) >= 0;
+  const good   = cfg.invert ? !isUp : isUp;
 
-  // 값 업데이트
-  el.textContent = fmtPrice(d.price, cfg.fmt);
+  el.textContent = fmtPrice(price, cfg.fmt);
 
-  // 변화량 업데이트
-  const chgEl = el.nextElementSibling;
-  if (chgEl && chgEl.classList.contains('card-change')) {
-    chgEl.textContent = fmtChg(d.change, d.pct);
-    chgEl.className = 'card-change ' + (isUp ? 'up' : 'down');
+  if (cfg.yieldRow) {                                   // 국채금리 표 행
+    setRateRow(cfg.id, { value: price, prev: d.prev != null ? d.prev * m : null });
+    return;
   }
 
-  // 카드 색상 업데이트
+  const chgEl = el.nextElementSibling;
+  if (chgEl && chgEl.classList.contains('card-change')) {
+    chgEl.textContent = fmtChg(change, d.pct, FMT_DIGITS[cfg.fmt] ?? 2);
+    chgEl.className = 'card-change ' + (good ? 'up' : 'down');
+  }
+
+  const card = el.closest('.card');
   if (card) {
-    card.classList.remove('up', 'down');
-    card.classList.add(isUp ? 'up' : 'down');
+    card.classList.remove('up', 'down', 'neutral');
+    card.classList.add(good ? 'up' : 'down');
+  }
+
+  // 52주 고저 (실데이터)
+  const w = document.getElementById(cfg.id + '-52w');
+  if (w && d.high52 != null && d.low52 != null && d.low52 > 0) {
+    const f = v => v.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    w.textContent = `52W H: ${f(d.high52)} / L: ${f(d.low52)}`;
   }
 }
 
@@ -1304,9 +1364,8 @@ fetchMarketData();
 setInterval(fetchMarketData, 5 * 60 * 1000);
 
 // =============================================
-// FRED 유동성 데이터 — 브라우저 직접 호출
+// FRED 유동성 데이터 — /api/fred 서버 경유 (키는 Vercel 환경변수)
 // =============================================
-const FRED_KEY = 'e0f4f2ac738a63ae16fb344524e79cd7';
 
 function fmtTrillion(v) {
   if (v == null) return '—';
@@ -1314,27 +1373,75 @@ function fmtTrillion(v) {
   return '$' + v.toLocaleString('ko-KR') + '억';
 }
 
-function updateFredCard(valueId, chgId, dateId, value, prev, date, invertDirection) {
+function updateFredCard(valueId, chgId, dateId, value, prev, date, invertDirection, label = '주간') {
   const el  = document.getElementById(valueId);
   const chgEl  = document.getElementById(chgId);
-  const dateEl = document.getElementById(dateId);
+  const dateEl = dateId ? document.getElementById(dateId) : null;
   if (!el || value == null) return;
   el.textContent = fmtTrillion(value);
   if (chgEl && prev != null) {
     const diff = value - prev;
     const isUp = diff > 0;
     const isPositive = invertDirection ? !isUp : isUp;
-    const arrow = isUp ? '▲' : '▼';
-    const sign  = isUp ? '+' : '';
-    chgEl.textContent = arrow + ' ' + sign + fmtTrillion(Math.abs(diff)) + ' (주간)';
-    chgEl.className   = 'card-change ' + (isPositive ? 'up' : 'down');
+    const arrow = diff === 0 ? '—' : isUp ? '▲' : '▼';
+    const sign  = isUp ? '+' : diff < 0 ? '-' : '';
+    chgEl.textContent = `${arrow} ${sign}${fmtTrillion(Math.abs(diff))} (${label})`;
+    chgEl.className   = 'card-change ' + (diff === 0 ? 'neutral' : isPositive ? 'up' : 'down');
     const card = el.closest('.card');
-    if (card) { card.classList.remove('up','down','neutral'); card.classList.add(isPositive ? 'up' : 'down'); }
+    if (card) { card.classList.remove('up','down','neutral'); card.classList.add(diff === 0 ? 'neutral' : isPositive ? 'up' : 'down'); }
   }
   if (dateEl && date) {
     const base = dateEl.textContent.split('·')[0].trim();
     dateEl.textContent = base + ' · 기준일: ' + date;
   }
+}
+
+const setText = (id, t) => { const e = document.getElementById(id); if (e) e.textContent = t; };
+const setBar  = (id, ratio) => { const e = document.getElementById(id); if (e) e.style.width = Math.max(1, Math.min(100, ratio * 100)) + '%'; };
+const sgn = v => (v > 0 ? '+' : '');
+
+function liqLabel(score) {
+  if (score >= 70) return '유동성 풍부 — 위험자산 우호적';
+  if (score >= 55) return '유동성 개선 — 긍정적';
+  if (score >= 45) return '중립 — 관망 구간';
+  if (score >= 30) return '유동성 위축 — 신중 필요';
+  return '유동성 긴축 — 변동성 주의';
+}
+
+function renderLiquidityGauge(nl) {
+  if (!nl || nl.score == null) { setText('liq-title', '유동성 지수 계산 불가 (FRED 데이터 부족)'); return; }
+  const score = nl.score;
+  const color = score >= 55 ? 'var(--up)' : score < 45 ? 'var(--down)' : 'var(--warn)';
+  const sc = document.getElementById('liq-score');
+  if (sc) { sc.textContent = score; sc.style.color = color; }
+  const needle = document.getElementById('needle');
+  if (needle) needle.setAttribute('transform', `rotate(${-90 + score * 1.8} 60 65)`);
+  setText('liq-title', liqLabel(score));
+
+  const delta = (id, prev) => {
+    const e = document.getElementById(id);
+    if (!e) return;
+    if (prev == null) { e.textContent = '—'; return; }
+    const df = score - prev;
+    e.textContent = `${sgn(df)}${df}pt`;
+    e.style.color = df > 0 ? 'var(--up)' : df < 0 ? 'var(--down)' : 'var(--text-dim)';
+  };
+  delta('liq-d1w', nl.score_1w);
+  delta('liq-d4w', nl.score_4w);
+
+  const tr = document.getElementById('liq-trend');
+  if (tr && nl.score_4w != null) {
+    const df = score - nl.score_4w;
+    tr.textContent = df >= 5 ? '개선' : df <= -5 ? '악화' : '횡보';
+    tr.className = 'tag ' + (df >= 5 ? 'tag-up' : df <= -5 ? 'tag-down' : 'tag-warn');
+  }
+  setText('liq-desc',
+    `순유동성(Fed 총자산 − TGA − RRP) ${fmtTrillion(nl.value)} · 4주 전 대비 ${sgn(nl.chg4w_pct)}${nl.chg4w_pct.toFixed(2)}% · ` +
+    `최근 ${nl.window_weeks}주 중 ${Math.round(nl.percentile)}% 위치 (기준 ${nl.date}). ` +
+    `점수 = 50 + 4주 변화(±25) + 52주 내 위치(±25). 참고용 지표이며 투자 권유가 아닙니다.`);
+
+  setText('netliq-val', fmtTrillion(nl.value));
+  setText('netliq-sub', `4주 전 대비 ${sgn(nl.chg4w_pct)}${nl.chg4w_pct.toFixed(2)}%`);
 }
 
 async function fetchFredData() {
@@ -1344,27 +1451,73 @@ async function fetchFredData() {
     if (!res.ok) throw new Error('api/fred 응답 오류: ' + res.status);
     const json = await res.json();
     if (!json.ok) throw new Error(json.error);
+    if (json.errors) console.warn('FRED 일부 실패:', json.errors);
 
     const d = json.data;
-    const T  = d.tga              ?? {};
-    const R  = d.rrp              ?? {};
-    const B  = d.fed_balance_sheet ?? {};
-    const Re = d.reserves         ?? {};
+    const T = d.tga ?? {}, R = d.rrp ?? {}, B = d.fed_balance_sheet ?? {}, Re = d.reserves ?? {};
 
     updateFredCard('fred-tga',      'fred-tga-chg',      'fred-tga-date', T.value,  T.prev,  T.date,  true);
-    updateFredCard('fred-rrp',      'fred-rrp-chg',      'fred-rrp-date', R.value,  R.prev,  R.date,  false);
+    updateFredCard('fred-rrp',      'fred-rrp-chg',      'fred-rrp-date', R.value,  R.prev,  R.date,  false, '전일');
     updateFredCard('fred-balance',  'fred-balance-chg',  null,            B.value,  B.prev,  B.date,  true);
     updateFredCard('fred-reserves', 'fred-reserves-chg', null,            Re.value, Re.prev, Re.date, false);
 
-    // 대차대조표 프로그레스 바 업데이트
-    if (B.value != null) {
-      const pct = Math.min(100, Math.round((B.value / 89700) * 100));
-      const bar = document.querySelector('.balance-bar-fill');
-      if (bar) bar.style.width = pct + '%';
+    // 막대/보조 라벨 (이전엔 첫 번째 .balance-bar-fill = TGA 막대를 대차대조표 값으로 덮어쓰는 버그가 있었음)
+    if (T.value != null) { setBar('fred-tga-bar', T.value / 15000); setText('fred-tga-mid', '현재 ' + fmtTrillion(T.value)); }
+    if (R.value != null) {
+      setBar('fred-rrp-bar', R.value / 25000);
+      setText('fred-rrp-mid', '현재 ' + fmtTrillion(R.value));
+      const tag = document.getElementById('fred-rrp-tag');
+      if (tag) {
+        tag.textContent = R.value < 1000 ? '사실상 소진 (저점권)' : R.value < 5000 ? '낮은 수준' : '높은 수준';
+        tag.className = 'tag ' + (R.value < 1000 ? 'tag-up' : 'tag-blue');
+      }
     }
+    const bc = document.getElementById('fred-balance-chg');
+    if (bc && B.change != null && B.change !== 0) bc.textContent += B.change < 0 ? ' · 축소 중' : ' · 확대 중';
+
+    // Fed 자산 구성
+    const C = d.fed_composition;
+    if (C) {
+      setText('fed-treasury-val', fmtTrillion(C.treasury));
+      setText('fed-mbs-val', fmtTrillion(C.mbs));
+      setText('fed-other-val', fmtTrillion(C.other));
+      setBar('fed-treasury-bar', C.treasury / C.total);
+      setBar('fed-mbs-bar', C.mbs / C.total);
+      setBar('fed-other-bar', Math.max(0, C.other) / C.total);
+      setText('fed-peak-text',
+        `고점(${C.peak_label}): ${fmtTrillion(C.peak)} → 현재: ${fmtTrillion(C.total)} | 축소 규모: ${fmtTrillion(C.peak - C.total)} (${C.shrink_pct.toFixed(1)}%)`);
+    }
+
+    // 정책금리
+    const P = d.policy_rates ?? {};
+    setText('rate-sofr', P.sofr?.value != null ? P.sofr.value.toFixed(2) + '%' : '—');
+    setText('rate-effr', P.effr?.value != null ? P.effr.value.toFixed(2) + '%' : '—');
+    setText('rate-iorb', P.iorb?.value != null ? P.iorb.value.toFixed(2) + '%' : '—');
+
+    // 미 국채 2년 + 10Y-2Y 스프레드 (FRED, 전일 마감 기준)
+    const U = d.us_rates ?? {};
+    setRateRow('rt-us2y', U.us2y);
+    const sp = U.spread;
+    if (sp?.value != null) {
+      setText('rt-us-spread', (sp.value >= 0 ? '+' : '') + sp.value.toFixed(3));
+      const sc = document.getElementById('rt-us-spread-chg');
+      if (sc) {
+        sc.textContent = sp.value >= 0 ? '▲ 정상 (우상향)' : '▼ 역전';
+        sc.className = 'td-chg ' + (sp.value >= 0 ? 'up' : 'down');
+      }
+    }
+    if (U.us2y?.date) setText('us-rate-date', '· 2Y·스프레드: FRED ' + U.us2y.date);
+
+    // 미국 크레딧 스프레드
+    setBpRow('us-hy', d.credit_spreads?.us_hy);
+    setBpRow('us-ig', d.credit_spreads?.us_ig);
+
+    // 헤드라인 유동성 종합 지수 (실계산)
+    renderLiquidityGauge(d.net_liquidity);
 
   } catch (e) {
     console.warn('FRED 로드 실패:', e.message);
+    setText('liq-title', '유동성 데이터 로드 실패: ' + e.message);
   }
 }
 
@@ -1540,53 +1693,91 @@ fetchMarketStrength();
 setInterval(fetchMarketStrength, 5 * 60 * 1000);
 
 // =============================================
-// KRX 공매도·신용거래 데이터 연동
+// 한국은행 ECOS — 국고채·기준금리·회사채·증시주변자금
 // =============================================
-async function fetchKrxData() {
-  try {
-    const res = await fetch('/api/krx');
-    if (!res.ok) throw new Error('KRX API 오류: ' + res.status);
-    const json = await res.json();
-    if (!json.ok) throw new Error(json.error);
+function fmtEcosDate(t) {
+  if (!t) return '';
+  return t.length === 8 ? `${t.slice(0,4)}.${t.slice(4,6)}.${t.slice(6)}` : `${t.slice(0,4)}.${t.slice(4,6)}`;
+}
 
-    const d = json.data;
-
-    // 공매도 잔고 업데이트
-    if (d.short_selling?.kospi != null) {
-      const kospiEl = document.getElementById('krx-short-kospi');
-      if (kospiEl) kospiEl.textContent = d.short_selling.kospi.toLocaleString('ko-KR');
-    }
-    if (d.short_selling?.kosdaq != null) {
-      const kosdaqEl = document.getElementById('krx-short-kosdaq');
-      if (kosdaqEl) kosdaqEl.textContent = d.short_selling.kosdaq.toLocaleString('ko-KR');
-    }
-    if (d.short_selling?.date) {
-      const dateEls = document.querySelectorAll('.krx-short-date');
-      dateEls.forEach(el => el.textContent = '기준일: ' + d.short_selling.date);
-    }
-
-    // 신용융자 잔고 업데이트
-    if (d.credit?.kospi != null) {
-      const el = document.getElementById('krx-credit-kospi');
-      if (el) el.textContent = d.credit.kospi.toLocaleString('ko-KR');
-    }
-    if (d.credit?.kosdaq != null) {
-      const el = document.getElementById('krx-credit-kosdaq');
-      if (el) el.textContent = d.credit.kosdaq.toLocaleString('ko-KR');
-    }
-    if (d.credit?.kospi != null && d.credit?.kosdaq != null) {
-      const total = d.credit.kospi + d.credit.kosdaq;
-      const el = document.getElementById('krx-credit-total');
-      if (el) el.textContent = total.toLocaleString('ko-KR');
-    }
-
-  } catch (e) {
-    console.warn('KRX 데이터 로드 실패, 샘플 유지:', e.message);
+// 잔고 행: 억원 + 전월비
+function setFundRow(id, d) {
+  const el = document.getElementById(id);
+  const chg = document.getElementById(id + '-chg');
+  if (!el) return;
+  if (d?.value == null) { el.textContent = '—'; return; }
+  el.textContent = Math.round(d.value).toLocaleString('ko-KR');
+  if (chg && d.prev != null) {
+    const diff = Math.round(d.value - d.prev);
+    chg.textContent = `${diff >= 0 ? '▲ +' : '▼ '}${diff.toLocaleString('ko-KR')}`;
+    chg.className = 'td-chg ' + (diff >= 0 ? 'up' : 'down');
   }
 }
 
-fetchKrxData();
-setInterval(fetchKrxData, 60 * 60 * 1000);
+async function fetchEcosData() {
+  try {
+    const res = await fetch('/api/ecos');
+    const json = await res.json();
+    if (!json.ok) throw new Error(JSON.stringify(json.errors ?? json.error));
+    if (json.errors) console.warn('ECOS 일부 실패:', json.errors);
+    const { rates = {}, base_rate, market_funds } = json.data;
+
+    // 국고채 (응답에 없는 항목은 '—'로 표시: 가짜 샘플값을 남기지 않음)
+    setRateRow('ktb-1y',  rates.ktb1y);
+    setRateRow('ktb-3y',  rates.ktb3y);
+    setRateRow('ktb-5y',  rates.ktb5y);
+    setRateRow('ktb-10y', rates.ktb10y);
+    if (rates.ktb3y?.date) setText('ktb-date', '· ' + fmtEcosDate(rates.ktb3y.date));
+
+    // 회사채 + AA- 스프레드
+    setRateRow('kr-corp-aa',  rates.corpAA,  '%', false);
+    setRateRow('kr-corp-bbb', rates.corpBBB, '%', false);
+    if (rates.corpAA?.value != null && rates.ktb3y?.value != null) {
+      const spread = Math.round((rates.corpAA.value - rates.ktb3y.value) * 100);
+      const prev = (rates.corpAA.prev != null && rates.ktb3y.prev != null)
+        ? Math.round((rates.corpAA.prev - rates.ktb3y.prev) * 100) : null;
+      setBpRow('kr-aa-spread', { value: spread, prev });
+    } else setBpRow('kr-aa-spread', null);
+
+    // 기준금리 (prev = 직전 변경 전 금리)
+    const bEl = document.getElementById('kr-base');
+    if (bEl && base_rate?.value != null) {
+      bEl.textContent = base_rate.value.toFixed(2);
+      const chg = bEl.nextElementSibling;
+      const diff = base_rate.value - (base_rate.prev ?? base_rate.value);
+      if (chg) {
+        chg.textContent = diff > 0 ? `▲ 인상 (+${diff.toFixed(2)})` : diff < 0 ? `▼ 인하 (${diff.toFixed(2)})` : '— 동결';
+        chg.className = 'td-chg ' + (diff > 0 ? 'up' : diff < 0 ? 'down' : 'neutral');
+        chg.style.color = diff === 0 ? 'var(--blue)' : '';
+      }
+      const bar = bEl.closest('tr')?.querySelector('.inline-bar-fill');
+      if (bar) bar.style.width = Math.min(100, base_rate.value / 6 * 100) + '%';
+    } else if (bEl) bEl.textContent = '—';
+
+    // 증시주변자금
+    if (market_funds) {
+      setFundRow('krx-credit-total', market_funds.margin_loan);
+      setFundRow('mf-deposit',       market_funds.deposit);
+      setFundRow('mf-unsettled',     market_funds.unsettled);
+
+      const m = market_funds.margin_loan?.value, dep = market_funds.deposit?.value;
+      if (m != null && dep) {
+        const ratio = m / dep * 100;
+        document.getElementById('credit-ratio-bar').style.width = Math.min(100, ratio / 60 * 100) + '%';
+        setText('credit-ratio-text', `현재 ${ratio.toFixed(1)}%`);
+      }
+      const tag = document.getElementById('credit-tag');
+      if (tag) { tag.textContent = 'ECOS 연동'; tag.className = 'tag tag-up'; }
+      if (market_funds.margin_loan?.date) setText('credit-date', '기준월: ' + fmtEcosDate(market_funds.margin_loan.date) + ' (한국은행 월간 통계)');
+    }
+  } catch (e) {
+    console.warn('ECOS 데이터 로드 실패:', e.message);
+    setText('credit-tag', '로드 실패');
+  }
+}
+
+fetchEcosData();
+setInterval(fetchEcosData, 60 * 60 * 1000);
 
 
 // =============================================

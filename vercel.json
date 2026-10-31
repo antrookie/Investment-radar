@@ -2,6 +2,6 @@
   "functions": {
     "api/fred.js": { "maxDuration": 30 },
     "api/data.js": { "maxDuration": 15 },
-    "api/krx.js":  { "maxDuration": 30 }
+    "api/ecos.js": { "maxDuration": 30 }
   }
 }
