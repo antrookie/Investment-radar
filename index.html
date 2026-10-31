@@ -1457,8 +1457,8 @@ async function fetchFredData() {
     const T = d.tga ?? {}, R = d.rrp ?? {}, B = d.fed_balance_sheet ?? {}, Re = d.reserves ?? {};
 
     updateFredCard('fred-tga',      'fred-tga-chg',      'fred-tga-date', T.value,  T.prev,  T.date,  true);
-    updateFredCard('fred-rrp',      'fred-rrp-chg',      'fred-rrp-date', R.value,  R.prev,  R.date,  false, '전일');
-    updateFredCard('fred-balance',  'fred-balance-chg',  null,            B.value,  B.prev,  B.date,  true);
+    updateFredCard('fred-rrp',      'fred-rrp-chg',      'fred-rrp-date', R.value,  R.prev,  R.date,  true,  '전일');   // RRP 증가 = 유동성 흡수 → 빨강
+    updateFredCard('fred-balance',  'fred-balance-chg',  null,            B.value,  B.prev,  B.date,  false);  // 자산 확대 = 유동성 공급 → 초록
     updateFredCard('fred-reserves', 'fred-reserves-chg', null,            Re.value, Re.prev, Re.date, false);
 
     // 막대/보조 라벨 (이전엔 첫 번째 .balance-bar-fill = TGA 막대를 대차대조표 값으로 덮어쓰는 버그가 있었음)
