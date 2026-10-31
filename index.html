@@ -673,27 +673,6 @@
       <div class="card-sub" style="margin-top:0.5rem" id="stock-intraday-status">5분 간격 · 실제 원화 거래대금과는 차이가 있을 수 있습니다</div>
     </div>
 
-    <!-- 투자자별 매매동향 (KRX 승인 후 연동 예정) -->
-    <div class="grid-3" style="margin-top:1.2rem">
-      <div class="card neutral">
-        <div class="card-tag">KRX · INVESTOR FLOW</div>
-        <div class="card-name">외국인 순매수</div>
-        <div class="card-value" style="color:var(--text-dim);font-size:1.1rem">준비 중</div>
-        <div class="card-sub">KRX API 승인 후 연동 예정</div>
-      </div>
-      <div class="card neutral">
-        <div class="card-tag">KRX · INVESTOR FLOW</div>
-        <div class="card-name">기관 순매수</div>
-        <div class="card-value" style="color:var(--text-dim);font-size:1.1rem">준비 중</div>
-        <div class="card-sub">KRX API 승인 후 연동 예정</div>
-      </div>
-      <div class="card neutral">
-        <div class="card-tag">KRX · INVESTOR FLOW</div>
-        <div class="card-name">개인 순매수</div>
-        <div class="card-value" style="color:var(--text-dim);font-size:1.1rem">준비 중</div>
-        <div class="card-sub">KRX API 승인 후 연동 예정</div>
-      </div>
-    </div>
   </div>
 
   <!-- 오늘의 시장 강도 — 코인(BTC 기준) -->
@@ -838,7 +817,7 @@
   <!-- 국내 증시 -->
   <div class="section-anim">
     <div class="section-label"><span>국내 증시</span></div>
-    <div class="grid-4">
+    <div class="grid-3">
       <div class="card down">
         <div class="card-tag">KRX · INDEX</div>
         <div class="card-name">KOSPI</div>
@@ -859,13 +838,6 @@
         <div class="card-value big">338.80</div>
         <div class="card-change down"><span class="arrow">▼</span> -2.45 (-0.72%)</div>
         <div class="card-sub">미결제약정: 186,422계약</div>
-      </div>
-      <div class="card neutral">
-        <div class="card-tag">FEAR & GREED <span style="color:var(--warn)">· 샘플</span></div>
-        <div class="card-name">국내 투자심리</div>
-        <div class="card-value big">38</div>
-        <div class="card-change neutral"><span style="color:var(--warn)">■</span> 공포 구간</div>
-        <div class="card-sub">전주: 45 / 중립: 50</div>
       </div>
     </div>
   </div>
@@ -918,7 +890,7 @@
             <th>만기</th>
             <th style="text-align:right">금리(%)</th>
             <th style="text-align:right">전일비</th>
-            <th>추세</th>
+            <th>수준</th>
           </tr></thead>
           <tbody>
             <tr><td class="td-name">2년물</td><td class="td-val" id="rt-us2y">—</td><td class="td-chg">—</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:0%;background:var(--blue)"></div></div></td></tr>
@@ -936,7 +908,7 @@
             <th>만기</th>
             <th style="text-align:right">금리(%)</th>
             <th style="text-align:right">전일비</th>
-            <th>추세</th>
+            <th>수준</th>
           </tr></thead>
           <tbody>
             <tr><td class="td-name">1년물</td><td class="td-val" id="ktb-1y">—</td><td class="td-chg">—</td><td><div class="inline-bar-bg"><div class="inline-bar-fill" style="width:0%;background:var(--blue)"></div></div></td></tr>
@@ -1074,38 +1046,10 @@
     </div>
   </div>
 
-  <!-- 국내 공매도 & 신용거래 -->
+  <!-- 국내 신용거래 · 증시자금 -->
   <div class="section-anim">
-    <div class="section-label"><span>국내증시 — 수급 현황</span></div>
-    <div class="two-col">
-      <!-- 공매도 -->
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
-          <div>
-            <div class="card-tag">KRX · SHORT SELLING</div>
-            <div class="card-name" style="margin:0.4rem 0 0">공매도 잔고 현황</div>
-          </div>
-          <span class="tag tag-warn">샘플 데이터</span>
-        </div>
-        <table class="data-table">
-          <thead><tr>
-            <th>구분</th>
-            <th style="text-align:right">잔고 (억원)</th>
-            <th style="text-align:right">전주비</th>
-            <th style="text-align:right">비중</th>
-          </tr></thead>
-          <tbody>
-            <tr><td class="td-name">KOSPI 공매도</td><td class="td-val" id="krx-short-kospi">68,420</td><td class="td-chg up">▲ +2,140</td><td class="td-val">0.84%</td></tr>
-            <tr><td class="td-name">KOSDAQ 공매도</td><td class="td-val" id="krx-short-kosdaq">12,880</td><td class="td-chg up">▲ +560</td><td class="td-val">0.62%</td></tr>
-            <tr><td class="td-name">외국인 비중</td><td class="td-val" style="color:var(--down)">72.4%</td><td class="td-chg down">▼ -1.2%p</td><td class="td-val">—</td></tr>
-            <tr><td class="td-name">기관 비중</td><td class="td-val">22.1%</td><td class="td-chg up">▲ +0.8%p</td><td class="td-val">—</td></tr>
-          </tbody>
-        </table>
-        <div style="margin-top:1rem;font-size:0.68rem;color:var(--text-dim);border-top:1px solid var(--border);padding-top:0.8rem;font-family:'JetBrains Mono',monospace;line-height:1.8">
-          ⚠️ 예시 수치입니다 — 공매도 잔고는 한국은행 ECOS에 없어 별도 소스(KRX) 연동이 필요합니다
-        </div>
-      </div>
-
+    <div class="section-label"><span>국내증시 — 증시자금 현황</span></div>
+    <div class="two-col" style="grid-template-columns:1fr">
       <!-- 신용거래 -->
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
@@ -1176,7 +1120,7 @@
     📡 증시·환율·금리·원자재·가상자산: Yahoo Finance (5분 지연) · 자동 갱신 5분 주기<br>
     📊 Fed 대차대조표·지급준비금·RRP·TGA·정책금리·미 국채 2년·크레딧 스프레드: FRED (St. Louis Fed) · 자동 갱신 1시간 주기<br>
     🏦 국고채·기준금리·회사채·신용융자·예탁금: 한국은행 ECOS (증시자금은 월간 통계)<br>
-    '샘플' 표시 항목(코스피200 선물, 국내 투자심리, 공매도)은 예시 수치이며 실데이터가 아닙니다 · 본 사이트는 정보 제공 목적이며 투자 권유가 아닙니다.
+    '샘플' 표시 항목(코스피200 선물)은 예시 수치이며 실데이터가 아닙니다 · 본 사이트는 정보 제공 목적이며 투자 권유가 아닙니다.
   </div>
 
 </div>
@@ -1228,7 +1172,7 @@ function fmtChg(change, pct, digits = 2) {
 }
 
 // 금리 표 행(값 셀 + 바로 옆 전일비 셀 + 막대) 공통 갱신. d = {value, prev}
-function setRateRow(id, d, suffix = '', withBar = true) {
+function setRateRow(id, d, suffix = '', withBar = true, neutral = false) {
   const el = document.getElementById(id);
   if (!el) return;
   if (d?.value == null) { el.textContent = '—'; return; }
@@ -1239,7 +1183,7 @@ function setRateRow(id, d, suffix = '', withBar = true) {
     if (diff == null) { chg.textContent = '—'; chg.className = 'td-chg'; }
     else {
       chg.textContent = `${diff > 0 ? '▲ +' : diff < 0 ? '▼ ' : '— '}${diff.toFixed(3)}`;
-      chg.className = 'td-chg ' + (diff > 0 ? 'up' : diff < 0 ? 'down' : 'neutral');
+      chg.className = neutral ? 'td-chg' : 'td-chg ' + (diff > 0 ? 'up' : diff < 0 ? 'down' : 'neutral');
     }
   }
   const bar = withBar ? el.closest('tr')?.querySelector('.inline-bar-fill') : null;
@@ -1730,8 +1674,8 @@ async function fetchEcosData() {
     if (rates.ktb3y?.date) setText('ktb-date', '· ' + fmtEcosDate(rates.ktb3y.date));
 
     // 회사채 + AA- 스프레드
-    setRateRow('kr-corp-aa',  rates.corpAA,  '%', false);
-    setRateRow('kr-corp-bbb', rates.corpBBB, '%', false);
+    setRateRow('kr-corp-aa',  rates.corpAA,  '%', false, true);   // 회사채 금리는 호재/악재 색 구분 없이 표시
+    setRateRow('kr-corp-bbb', rates.corpBBB, '%', false, true);
     if (rates.corpAA?.value != null && rates.ktb3y?.value != null) {
       const spread = Math.round((rates.corpAA.value - rates.ktb3y.value) * 100);
       const prev = (rates.corpAA.prev != null && rates.ktb3y.prev != null)
