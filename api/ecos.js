@@ -114,15 +114,27 @@ export default async function handler(req, res) {
     }
   } else errors.base_rate = baseR.reason?.message;
 
-  // ── 증시주변자금 (단위: 백만원 → 억원) ──
+  // ── 증시주변자금 → 억원 ──
+  // 통계표 설명은 '백만원'이지만 실제 응답은 '원' 단위로 오는 것이 확인됨.
+  // ECOS가 주는 UNIT_NAME을 읽어 환산하고, 결과가 비상식적이면(신용융자가 1천억~1000조 밖) 다른 단위로 보정.
   if (fundsR.status === 'fulfilled') {
     const g = groupLatest(fundsR.value);
-    if (debug) seen.funds = Object.values(g).map(x => `${x.code} ${x.name}`);
-    const toUk = 1 / 100;
+    if (debug) seen.funds = Object.values(g).map(x => `${x.code} ${x.name} [${x.unit}]`);
+
+    const loan = pick(g, ['신용융자잔고', '신용융자잔고2)'], ['S23E']);
+    const SCALES = { '원': 1e-8, '천원': 1e-5, '백만원': 1e-2, '십억원': 10, '억원': 1 };
+    const sane = v => v != null && v >= 1e3 && v <= 1e7;            // 억원 기준 1천억 ~ 1000조
+    let scale = SCALES[norm(loan?.unit)] ?? 1e-2;
+    if (loan?.value != null && !sane(loan.value * scale)) {
+      const fix = Object.values(SCALES).find(sc => sane(loan.value * sc));
+      if (fix != null) scale = fix;
+    }
+    if (debug) seen.funds_scale = { unit: loan?.unit ?? null, scale };
+
     data.market_funds = {
-      margin_loan: out(pick(g, ['신용융자잔고', '신용융자잔고2)'], ['S23E']), toUk),
-      deposit:     out(pick(g, ['투자자예탁금'], ['S23A']), toUk),
-      unsettled:   out(pick(g, ['위탁매매미수금'], ['S23D']), toUk),
+      margin_loan: out(loan, scale),
+      deposit:     out(pick(g, ['투자자예탁금'], ['S23A']), scale),
+      unsettled:   out(pick(g, ['위탁매매미수금'], ['S23D']), scale),
       unit: '억원',
     };
   } else errors.market_funds = fundsR.reason?.message;
